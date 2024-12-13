@@ -46,7 +46,6 @@ def test_task_1():
     received_status_code, received_json = _send_request(json)
     print(f"Test 3, incorrect message field.\nrequest data: {field_name} : {field_content};\nReceived status code: {received_status_code}; received json response: {received_json}\n")
     
-
-
+    
 if __name__ == "__main__":
     test_task_1()

@@ -7,7 +7,7 @@ import (
 )
 
 type Request struct {
-	Message string `json:"message"`
+	Message *string `json:"message"`
 }
 
 type Response struct {
@@ -33,13 +33,13 @@ func operateMessage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if request.Message == "" {
+	if request.Message == nil {
 		returnJSONError(w, "Incorrect JSON message", http.StatusBadRequest)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(200)
+	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(Response{
 		Status:  "success",
 		Message: "data has been successfully received",

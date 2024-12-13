@@ -38,8 +38,6 @@ func operateMessage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Printf("Received message: %s", request.Message)
-
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(200)
 	json.NewEncoder(w).Encode(Response{

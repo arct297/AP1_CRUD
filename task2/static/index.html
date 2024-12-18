@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clinic Management - Patient CRUD</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        header {
+            background-color: #333;
+            color: white;
+            padding: 10px;
+            text-align: center;
+        }
+        section {
+            padding: 20px;
+        }
+        footer {
+            background-color: #333;
+            color: white;
+            text-align: center;
+            padding: 10px;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+        }
+        input {
+            margin: 5px;
+            padding: 8px;
+            width: 200px;
+        }
+        button {
+            padding: 10px;
+            background-color: #333;
+            color: white;
+            border: none;
+        }
+        ul {
+            list-style-type: none;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Clinic Management System</h1>
+    </header>
+
+    <section>
+        <h2>Manage Patients</h2>
+
+        <div>
+            <h3>Create Patient</h3>
+            <form id="createPatientForm">
+                <input type="text" id="name" placeholder="Name" required>
+                <input type="number" id="age" placeholder="Age" required>
+                <input type="text" id="gender" placeholder="Gender" required>
+                <input type="text" id="contact" placeholder="Contact" required>
+                <input type="text" id="address" placeholder="Address" required>
+                <button type="submit">Add Patient</button>
+            </form>
+        </div>
+
+        <div>
+            <h3>Patients List</h3>
+            <button onclick="fetchPatients()">Fetch Patients</button>
+            <ul id="patientList"></ul>
+        </div>
+    </section>
+
+    <footer>
+        <p>&copy; 2024 Clinic Management System</p>
+    </footer>
+
+    <script>
+        // Fetch all patients
+        function fetchPatients() {
+            fetch('http://localhost:8080/patients')
+                .then(response => response.json())
+                .then(data => {
+                    const list = document.getElementById('patientList');
+                    list.innerHTML = ''; // Clear the list before updating
+                    data.forEach(patient => {
+                        list.innerHTML += `<li>${patient.name} (Age: ${patient.age}, Gender: ${patient.gender}, Contact: ${patient.contact}, Address: ${patient.address})</li>`;
+                    });
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+        }
+
+        // Create patient
+        document.getElementById('createPatientForm').addEventListener('submit', function(e) {
+    e.preventDefault(); // Prevent the default form submission
+
+    const patientData = {
+        name: document.getElementById('name').value,
+        age: parseInt(document.getElementById('age').value, 10),
+        gender: document.getElementById('gender').value,
+        contact: document.getElementById('contact').value,
+        address: document.getElementById('address').value
+    };
+
+    console.log('Sending Patient Data:', patientData);  // Debug log to inspect data being sent
+
+    fetch('http://localhost:8080/patients', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(patientData)
+    })
+    .then(response => {
+        console.log('Response Status:', response.status);  // Log status to see response code
+        if (!response.ok) {
+            throw new Error('Failed to send data');
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log('Response Data:', data);  // Log data received from the server
+        alert('Patient added!');
+        fetchPatients(); // Refresh list
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
+});
+
+    </script>
+</body>
+</html>

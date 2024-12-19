@@ -66,10 +66,36 @@
         </div>
 
         <div>
-            <h3>Patients List</h3>
-            <button onclick="fetchPatients()">Fetch Patients</button>
-            <ul id="patientList"></ul>
+            <h3>Update Patient</h3>
+            <form id="updatePatientForm">
+                <input type="number" id="updateId" placeholder="Patient ID" required>
+                <input type="text" id="updateName" placeholder="Name">
+                <input type="number" id="updateAge" placeholder="Age">
+                <input type="text" id="updateGender" placeholder="Gender">
+                <input type="text" id="updateContact" placeholder="Contact">
+                <input type="text" id="updateAddress" placeholder="Address">
+                <button type="submit">Update Patient</button>
+            </form>
         </div>
+
+        <div>
+            <h3>Delete Patient</h3>
+            <form id="deletePatientForm">
+                <input type="number" id="deleteId" placeholder="Patient ID" required>
+                <button type="submit">Delete Patient</button>
+            </form>
+        </div>
+
+        <div>
+            <h3>Show Patient Details</h3>
+            <form id="showPatientForm">
+                <input type="number" id="showId" placeholder="Patient ID" required>
+                <button type="submit">Show Details</button>
+            </form>
+            <p id="patientDetails"></p>
+        </div>
+
+        
     </section>
 
     <footer>
@@ -77,58 +103,111 @@
     </footer>
 
     <script>
-        // Fetch all patients
-        function fetchPatients() {
-            fetch('http://localhost:8080/patients')
-                .then(response => response.json())
-                .then(data => {
-                    const list = document.getElementById('patientList');
-                    list.innerHTML = ''; // Clear the list before updating
-                    data.forEach(patient => {
-                        list.innerHTML += `<li>${patient.name} (Age: ${patient.age}, Gender: ${patient.gender}, Contact: ${patient.contact}, Address: ${patient.address})</li>`;
-                    });
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                });
-        }
-
-        // Create patient
+       
+       
+        
         document.getElementById('createPatientForm').addEventListener('submit', function(e) {
-    e.preventDefault(); // Prevent the default form submission
+            e.preventDefault();
+            const patientData = {
+                name: document.getElementById('name').value,
+                age: parseInt(document.getElementById('age').value, 10),
+                gender: document.getElementById('gender').value,
+                contact: document.getElementById('contact').value,
+                address: document.getElementById('address').value
+            };
 
-    const patientData = {
-        name: document.getElementById('name').value,
-        age: parseInt(document.getElementById('age').value, 10),
-        gender: document.getElementById('gender').value,
-        contact: document.getElementById('contact').value,
-        address: document.getElementById('address').value
-    };
+            fetch('http://localhost:8080/patients', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(patientData)
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to send data');
+                }
+                return response.json();
+            })
+            .then(data => {
+                alert('Patient added!');
+                fetchPatients();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        });
 
-    console.log('Sending Patient Data:', patientData);  // Debug log to inspect data being sent
+        
+        document.getElementById('updatePatientForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const updateId = document.getElementById('updateId').value;
+            const patientData = {
+                name: document.getElementById('updateName').value,
+                age: parseInt(document.getElementById('updateAge').value, 10),
+                gender: document.getElementById('updateGender').value,
+                contact: document.getElementById('updateContact').value,
+                address: document.getElementById('updateAddress').value
+            };
 
-    fetch('http://localhost:8080/patients', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(patientData)
-    })
-    .then(response => {
-        console.log('Response Status:', response.status);  // Log status to see response code
-        if (!response.ok) {
-            throw new Error('Failed to send data');
-        }
-        return response.json();
-    })
-    .then(data => {
-        console.log('Response Data:', data);  // Log data received from the server
-        alert('Patient added!');
-        fetchPatients(); // Refresh list
-    })
-    .catch(error => {
-        console.error('Error:', error);
-    });
-});
+            fetch(`http://localhost:8080/patients/${updateId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(patientData)
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to update patient');
+                }
+                return response.json();
+            })
+            .then(data => {
+                alert('Patient updated!');
+                fetchPatients();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        });
 
+       
+        document.getElementById('deletePatientForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const deleteId = document.getElementById('deleteId').value;
+
+            fetch(`http://localhost:8080/patients/${deleteId}`, {
+                method: 'DELETE'
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to delete patient');
+                }
+                alert('Patient deleted!');
+                fetchPatients();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        });
+
+        
+        document.getElementById('showPatientForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const showId = document.getElementById('showId').value;
+
+            fetch(`http://localhost:8080/patients/${showId}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to fetch patient details');
+                }
+                return response.json();
+            })
+            .then(patient => {
+                const details = document.getElementById('patientDetails');
+                details.textContent = `ID: ${patient.id}, Name: ${patient.name}, Age: ${patient.age}, Gender: ${patient.gender}, Contact: ${patient.contact}, Address: ${patient.address}`;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        });
     </script>
 </body>
 </html>

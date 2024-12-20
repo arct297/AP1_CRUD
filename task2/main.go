@@ -16,7 +16,6 @@ import (
 
 var db *gorm.DB
 
-
 func initDatabaseClient() {
 	dsn := "user=username password=password dbname=clinic_db sslmode=disable"
 
@@ -34,7 +33,6 @@ type Response struct {
 	Message string   `json:"message"`
 	Content *Patient `json:"content,omitempty"`
 }
-
 
 type Patient struct {
 	gorm.Model
@@ -55,7 +53,6 @@ func operateUnsuccessfulResponse(w http.ResponseWriter, message string, statusCo
 	})
 }
 
-
 func createPatient(w http.ResponseWriter, r *http.Request) {
 	var patient Patient
 	err := json.NewDecoder(r.Body).Decode(&patient)
@@ -64,16 +61,10 @@ func createPatient(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Log the patient data before saving to check ID
-	log.Println("Patient before create:", patient)
-
 	if result := db.Create(&patient); result.Error != nil {
 		operateUnsuccessfulResponse(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
-
-	// Log the patient data after saving to check ID
-	log.Println("Patient after create:", patient)
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
@@ -87,8 +78,9 @@ func createPatient(w http.ResponseWriter, r *http.Request) {
 		operateUnsuccessfulResponse(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
-}
 
+	log.Println("Patient created:", patient)
+}
 
 func getPatientByID(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
@@ -119,6 +111,7 @@ func getPatientByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	log.Println("Patient received:", patient)
 }
 
 func updatePatient(w http.ResponseWriter, r *http.Request) {
@@ -158,6 +151,8 @@ func updatePatient(w http.ResponseWriter, r *http.Request) {
 		operateUnsuccessfulResponse(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
+
+	log.Println("Patient updated:", patient)
 }
 
 func deletePatient(w http.ResponseWriter, r *http.Request) {
@@ -190,6 +185,8 @@ func deletePatient(w http.ResponseWriter, r *http.Request) {
 		operateUnsuccessfulResponse(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
+
+	log.Println("Patient deleted:", id)
 }
 
 func main() {

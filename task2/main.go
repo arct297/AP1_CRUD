@@ -186,7 +186,7 @@ func deletePatient(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Println("Patient deleted:", id)
+	log.Println("Patient deleted with id: ", id)
 }
 
 func main() {

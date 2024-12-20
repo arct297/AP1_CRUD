@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clinic Management System</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        header {
+            background-color: #333;
+            color: white;
+            padding: 10px;
+            text-align: center;
+        }
+        section {
+            padding: 20px;
+            text-align: center;
+        }
+        footer {
+            background-color: #333;
+            color: white;
+            text-align: center;
+            padding: 10px;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+        }
+        .hidden {
+            display: none;
+        }
+        button {
+            margin: 10px;
+            padding: 10px;
+            background-color: #333;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #555;
+        }
+        .form-container {
+            margin: 20px auto;
+            width: 300px;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        input {
+            margin: 5px;
+            padding: 8px;
+            width: calc(100% - 16px);
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Clinic Management System</h1>
+    </header>
+
+    <section>
+        <h2>Manage Patients</h2>
+
+        <div>
+            <button onclick="showForm('createPatientForm')">Add Patient</button>
+            <button onclick="showForm('updatePatientForm')">Update Patient</button>
+            <button onclick="showForm('deletePatientForm')">Delete Patient</button>
+            <button onclick="showForm('showPatientForm')">Show Patient</button>
+        </div>
+
+        <div id="createPatientForm" class="form-container hidden">
+            <h3>Add Patient</h3>
+            <form>
+                <input type="text" placeholder="Name" id="name" required>
+                <input type="number" placeholder="Age" id="age" required>
+                <input type="text" placeholder="Gender" id="gender" required>
+                <input type="text" placeholder="Contact" id="contact" required>
+                <input type="text" placeholder="Address" id="address" required>
+                <button type="submit">Submit</button>
+            </form>
+            <p class="patientDetails"></p>
+        </div>
+
+        <div id="updatePatientForm" class="form-container hidden">
+            <h3>Update Patient</h3>
+            <form>
+                <input type="number" placeholder="Patient ID" id="updateId" required>
+                <input type="text" placeholder="Name" id="updateName">
+                <input type="number" placeholder="Age" id="updateAge">
+                <input type="text" placeholder="Gender" id="updateGender">
+                <input type="text" placeholder="Contact" id="updateContact">
+                <input type="text" placeholder="Address" id="updateAddress">
+                <button type="submit">Submit</button>
+            </form>
+            <p class="patientDetails"></p>
+        </div>
+
+        <div id="deletePatientForm" class="form-container hidden">
+            <h3>Delete Patient</h3>
+            <form>
+                <input type="number" placeholder="Patient ID" id="deleteId" required>
+                <button type="submit">Submit</button>
+            </form>
+            <p class="patientDetails"></p>
+        </div>
+
+        <div id="showPatientForm" class="form-container hidden">
+            <h3>Show Patient</h3>
+            <form>
+                <input type="number" placeholder="Patient ID" id="showId" required>
+                <button type="submit">Submit</button>
+            </form>
+            <p class="patientDetails"></p>
+        </div>
+    </section>
+
+    <footer>
+        <p>&copy; 2024 Clinic Management System</p>
+    </footer>
+
+    <script>
+        function showForm(formId) {
+            // Hide all forms
+            const forms = document.querySelectorAll('.form-container');
+            forms.forEach(form => form.classList.add('hidden'));
+
+            // Show the selected form
+            document.getElementById(formId).classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>
+
+ <script>
+
+
+    document.addEventListener("DOMContentLoaded", function () {
+    const baseUrl = "http://localhost:8080/patients";
+
+    function validatePatientData(patient) {
+
+    if (patient.age <= 0 ) {
+        return "Age must be a positive number";
+    }
+
+    if (patient.gender !== "M" && patient.gender !== "F") {
+        return "Gender must be either 'M' or 'F'";
+    }
+
+    if (!patient.name || patient.name.length < 2 || patient.name.length > 25) {
+        return "Name must be between 2 and 25 characters";
+    }
+
+    if (!patient.contact || !patient.contact.startsWith("+7") || patient.contact.length < 12) {
+        return "Contact must start with '+7' and be at least 12 characters long";
+    }
+
+    return null; 
+}
+
+
+    function handleResponse(response) {
+        return response.json().then((data) => {
+            if (response.ok) {
+                return data;
+            } else {
+                throw { code: data.code, message: data.message || "Unknown error" };
+            }
+        });
+    }
+
+    function showMessage(message, success = true) {
+        alert(success ? `✅ ${message}` : `❌ ${message}`);
+    }
+
+    function updatePatientDetails(patient) {
+        const details = document.getElementsByClassName("patientDetails");
+        const patientInfo = `ID: ${patient.ID}, Name: ${patient.name}, Age: ${patient.age}, Gender: ${patient.gender}, Contact: ${patient.contact}, Address: ${patient.address}`;
+
+        for (let i = 0; i < details.length; i++) {
+            details[i].textContent = patientInfo;
+        }
+    }
+
+    function clearPatientDetails(patient) {
+        const details = document.getElementsByClassName("patientDetails");
+
+        for (let i = 0; i < details.length; i++) {
+            details[i].textContent = "";
+        }
+    }
+
+    // Create Patient
+    document.getElementById("createPatientForm").addEventListener("submit", function (e) {
+        e.preventDefault();
+
+        const patientData = {
+            name: document.getElementById("name").value,
+            age: parseInt(document.getElementById("age").value, 10),
+            gender: document.getElementById("gender").value,
+            contact: document.getElementById("contact").value,
+            address: document.getElementById("address").value,
+        };
+
+        let validationError = null;
+        
+        if (patientData.age <= 0 ) {
+            validationError =  "Age must be a positive number";
+        }
+
+        if (patientData.gender !== "M" && patientData.gender !== "F") {
+            validationError =  "Gender must be either 'M' or 'F'";
+        }
+
+        if (!patientData.name || patientData.name.length < 2 || patientData.name.length > 25) {
+            validationError =  "Name must be between 2 and 25 characters";
+        }
+
+        if (!patientData.contact || !patientData.contact.startsWith("+7") || patientData.contact.length < 12) {
+            validationError =  "Contact must start with '+7' and be at least 12 characters long";
+        }
+
+
+        if (validationError) {
+            showMessage(validationError, false);
+            return; 
+        }
+
+        fetch(baseUrl, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(patientData),
+        })
+            .then(handleResponse)
+            .then((data) => {
+                if (data.code === 201) {
+                    showMessage(`Patient created successfully! `);
+                    updatePatientDetails(data.content);
+                }
+            })
+            .catch((error) => {
+                showMessage(error.message || "Error creating patient", false);
+            });
+    });
+
+    // Update Patient
+    document.getElementById("updatePatientForm").addEventListener("submit", function (e) {
+        e.preventDefault();
+
+        const updateId = document.getElementById("updateId").value;
+        const patientData = {
+            name: document.getElementById("updateName").value,
+            age: document.getElementById("updateAge").value
+                ? parseInt(document.getElementById("updateAge").value, 10)
+                : undefined,
+            gender: document.getElementById("updateGender").value || undefined,
+            contact: document.getElementById("updateContact").value || undefined,
+            address: document.getElementById("updateAddress").value || undefined,
+        };
+
+        let validationError;
+        if (patientData.age <= 0 ) {
+            validationError =  "Age must be a positive number";
+        }
+
+        if (validationError) {
+            showMessage(validationError, false);
+            return; 
+        }
+
+
+        fetch(`${baseUrl}/${updateId}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(patientData),
+        })
+            .then(handleResponse)
+            .then((data) => {
+                if (data.code === 200) {
+                    showMessage("Patient updated successfully!");
+                    updatePatientDetails(data.content);
+                }
+            })
+            .catch((error) => {
+                showMessage(error.message || "Error updating patient", false);
+            });
+    });
+
+    // Delete Patient
+    document.getElementById("deletePatientForm").addEventListener("submit", function (e) {
+        e.preventDefault();
+
+        const deleteId = document.getElementById("deleteId").value;
+
+        fetch(`${baseUrl}/${deleteId}`, {
+            method: "DELETE",
+        })
+            .then(handleResponse)
+            .then((data) => {
+                if (data.code === 200) {
+                    showMessage("Patient deleted successfully!");
+                } else if (data.code === 404) {
+                    showMessage("Patient not found", false);
+                }
+                clearPatientDetails()
+            })
+            .catch((error) => {
+                showMessage(error.message || "Error deleting patient", false);
+            });
+    });
+
+    // Show Patient
+    document.getElementById("showPatientForm").addEventListener("submit", function (e) {
+        e.preventDefault();
+
+        const showId = document.getElementById("showId").value;
+
+        fetch(`${baseUrl}/${showId}`)
+            .then(handleResponse)
+            .then((data) => {
+                if (data.code === 200) {
+                    updatePatientDetails(data.content);
+                } else if (data.code === 404) {
+                    showMessage("Patient not found", false);
+                }
+            })
+            .catch((error) => {
+                showMessage(error.message || "Error fetching patient", false);
+            });
+    });
+
+    
+});
+
+    </script>

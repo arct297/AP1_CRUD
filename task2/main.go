@@ -34,6 +34,13 @@ type Response struct {
 	Content *Patient `json:"content,omitempty"`
 }
 
+type ListResponse struct {
+	Code    int        `json:"code"`
+	Status  string     `json:"status"`
+	Message string     `json:"message"`
+	Content *[]Patient `json:"content,omitempty"`
+}
+
 type Patient struct {
 	gorm.Model
 	Name    string `json:"name"`
@@ -112,6 +119,36 @@ func getPatientByID(w http.ResponseWriter, r *http.Request) {
 	}
 
 	log.Println("Patient received:", patient)
+}
+
+func getPatientsList(w http.ResponseWriter, r *http.Request) {
+	var patients []Patient
+
+	result := db.Find(&patients)
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			operateUnsuccessfulResponse(w, "No patients found", http.StatusNotFound)
+		} else {
+			operateUnsuccessfulResponse(w, "Internal server error", http.StatusInternalServerError)
+		}
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+
+	err := json.NewEncoder(w).Encode(ListResponse{
+		Code:    http.StatusOK,
+		Status:  "success",
+		Message: "Patients list",
+		Content: &patients,
+	})
+	if err != nil {
+		operateUnsuccessfulResponse(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	log.Println("Patients list retrieved:", patients)
 }
 
 func updatePatient(w http.ResponseWriter, r *http.Request) {
@@ -211,6 +248,7 @@ func main() {
 	// Patient API routes
 	r.HandleFunc("/patients", createPatient).Methods("POST")        // Create patient
 	r.HandleFunc("/patients/{id}", getPatientByID).Methods("GET")   // Get patient by ID
+	r.HandleFunc("/patients", getPatientsList).Methods("GET")       // Get patients list
 	r.HandleFunc("/patients/{id}", updatePatient).Methods("PUT")    // Update patient by ID
 	r.HandleFunc("/patients/{id}", deletePatient).Methods("DELETE") // Delete patient by ID
 

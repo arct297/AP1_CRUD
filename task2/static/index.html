@@ -72,6 +72,7 @@
             <button onclick="showForm('updatePatientForm')">Update Patient</button>
             <button onclick="showForm('deletePatientForm')">Delete Patient</button>
             <button onclick="showForm('showPatientForm')">Show Patient</button>
+            <button onclick="showAllPatients()">Show All Patients</button>
         </div>
 
         <div id="createPatientForm" class="form-container hidden">
@@ -117,6 +118,10 @@
                 <button type="submit">Submit</button>
             </form>
             <p class="patientDetails"></p>
+        </div>
+        <div id="allPatientsContainer" class="form-container hidden">
+            <h3>All Patients</h3>
+            <ul id="allPatientsList"></ul>
         </div>
     </section>
 
@@ -334,8 +339,46 @@
                 showMessage(error.message || "Error fetching patient", false);
             });
     });
-
     
 });
 
+    function handleResponse(response) {
+        return response.json().then((data) => {
+            if (response.ok) {
+                return data;
+            } else {
+                throw { code: data.code, message: data.message || "Unknown error" };
+            }
+        });
+    }
+
+    function showMessage(message, success = true) {
+        alert(success ? `✅ ${message}` : `❌ ${message}`);
+    }
+
+    function showAllPatients() {
+
+        
+        const allPatientsContainer = document.getElementById("allPatientsContainer");
+        const allPatientsList = document.getElementById("allPatientsList");
+
+        allPatientsList.innerHTML = "";
+
+        baseUrl = "http://localhost:8080/patients";
+        fetch(baseUrl)
+            .then(handleResponse)
+            .then((data) => {
+                if (data.code === 200) {
+                    data.content.forEach((patient) => {
+                        const listItem = document.createElement("li");
+                        listItem.textContent = `ID: ${patient.id}, Name: ${patient.name}, Age: ${patient.age}, Gender: ${patient.gender}, Contact: ${patient.contact}, Address: ${patient.address}`;
+                        allPatientsList.appendChild(listItem);
+                    });
+                    allPatientsContainer.classList.remove("hidden");
+                }
+            })
+            .catch((error) => {
+                showMessage(error.message || "Error fetching all patients", false);
+            });
+    }
     </script>

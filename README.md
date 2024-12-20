@@ -78,4 +78,3 @@ If you haven't already, clone the repository to your local machine:
 ```
 
 Tools: Go Lang, PostgreSQL, Postman and Python testing
-

@@ -4,68 +4,67 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Clinic Management System</title>
-
-    <link rel="stylesheet" href="./styles.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        header {
+            background-color: #333;
+            color: white;
+            padding: 10px;
+            text-align: center;
+        }
+        section {
+            padding: 20px;
+            text-align: center;
+        }
+        footer {
+            background-color: #333;
+            color: white;
+            text-align: center;
+            padding: 10px;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+        }
+        .hidden {
+            display: none;
+        }
+        button {
+            margin: 10px;
+            padding: 10px;
+            background-color: #333;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #555;
+        }
+        .form-container {
+            margin: 20px auto;
+            width: 300px;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        input {
+            margin: 5px;
+            padding: 8px;
+            width: calc(100% - 16px);
+        }
+    </style>
 </head>
 <body>
-    <div class="main">
-        <header>
-            <h3><span>K&A</span> - Clinic MS</h3>
-            <div class="links-group">
-                <a href="#">Link</a>
-                <a href="#">Link</a>
-                <a href="#">Link</a>
-            </div>
-        </header>
-        
-        <div class="preview-slide">
-            <h1><span>K&A</span><br>Clinic Management System</h1>
-        </div>
+    <header>
+        <h1>Clinic Management System</h1>
+    </header>
 
-        <div class="description">
-            <p>Best clinic management system in the world description description description description description description description description description description description description description description</p>
-        </div>
-        
-        <div class="specialists">
-            <h3>Our specialists</h3>
-            
-            <div class="doctors-list">
-                <div class="doctor-card">
-                    <img class="card-pre-image" src="./src/doctor1.jpg" alt="">
-                    <p class="name">John Doe</p>
-                    <p class="expririence">Exp: 25 years</p>
-                    <p class="doctor-description">Doctor descr</p>
-                </div>
-                <div class="doctor-card">
-                    <img class="card-pre-image" src="./src/doctor1.jpg" alt="">
-                    <p class="name">John Doe</p>
-                    <p class="expririence">Exp: 25 years</p>
-                    <p class="doctor-description">Doctor descr</p>
-                </div>
-                <div class="doctor-card">
-                    <img class="card-pre-image" src="./src/doctor1.jpg" alt="">
-                    <p class="name">John Doe</p>
-                    <p class="expririence">Exp: 25 years</p>
-                    <p class="doctor-description">Doctor descr</p>
-                </div>
-                <div class="doctor-card">
-                    <img class="card-pre-image" src="./src/doctor1.jpg" alt="">
-                    <p class="name">John Doe</p>
-                    <p class="expririence">Exp: 25 years</p>
-                    <p class="doctor-description">Doctor descr</p>
-                </div>
-            </div>
-            <button type="button" class="show-more-button">Show more</button>
-        </div>
-
-        <footer>
-            <p>&copy; 2024 Clinic Management System</p>
-        </footer>    
-
-    </div>
-
-
-        <section>
+    <section>
         <h2>Manage Patients</h2>
 
         <div>

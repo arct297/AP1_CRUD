@@ -1,0 +1,63 @@
+DROP TABLE doctors;
+
+CREATE TABLE doctors (
+	id SERIAL PRIMARY KEY,
+	first_name VARCHAR(30) NOT NULL,
+	last_name VARCHAR(30) NOT NULL,
+	gender CHAR(1) NOT NULL CHECK (gender IN ('M', 'F', 'O')),
+	birthdate DATE NOT NULL,
+	email VARCHAR(100) UNIQUE,
+	phone_number VARCHAR(12) UNIQUE,
+	experience_years SMALLINT NOT NULL,
+	specialization VARCHAR(50),
+	photo_url VARCHAR(255),
+	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+	updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+	deleted_at TIMESTAMP DEFAULT NULL
+);
+
+-- Предоставить доступ на чтение:
+GRANT SELECT ON TABLE doctors TO username;
+
+-- Если нужны права на изменение данных:
+GRANT INSERT, UPDATE, DELETE ON TABLE doctors TO username;
+
+-- Если пользователь должен видеть структуру таблицы:
+GRANT USAGE ON SCHEMA public TO username;
+
+
+INSERT INTO doctors (first_name, last_name, gender, birthdate, email, phone_number, experience_years, specialization, photo_url)
+VALUES
+('John', 'Smith', 'M', '1980-05-15', 'john.smith@example.com', '1234567890', 15, 'Cardiology', 'https://example.com/photos/john_smith.jpg'),
+('Emily', 'Johnson', 'F', '1990-03-22', 'emily.johnson@example.com', '1234567891', 8, 'Neurology', 'https://example.com/photos/emily_johnson.jpg'),
+('Michael', 'Brown', 'M', '1985-07-10', 'michael.brown@example.com', '1234567892', 10, 'Pediatrics', 'https://example.com/photos/michael_brown.jpg'),
+('Jessica', 'Davis', 'F', '1992-12-01', 'jessica.davis@example.com', '1234567893', 5, 'Dermatology', 'https://example.com/photos/jessica_davis.jpg'),
+('David', 'Miller', 'M', '1975-08-30', 'david.miller@example.com', '1234567894', 20, 'Orthopedics', 'https://example.com/photos/david_miller.jpg'),
+('Sophia', 'Wilson', 'F', '1988-04-18', 'sophia.wilson@example.com', '1234567895', 12, 'Ophthalmology', 'https://example.com/photos/sophia_wilson.jpg'),
+('Chris', 'Moore', 'M', '1993-06-25', 'chris.moore@example.com', '1234567896', 6, 'Anesthesiology', 'https://example.com/photos/chris_moore.jpg'),
+('Anna', 'Taylor', 'F', '1983-09-09', 'anna.taylor@example.com', '1234567897', 14, 'Radiology', 'https://example.com/photos/anna_taylor.jpg'),
+('James', 'Anderson', 'M', '1978-11-12', 'james.anderson@example.com', '1234567898', 18, 'Surgery', 'https://example.com/photos/james_anderson.jpg'),
+('Olivia', 'Thomas', 'F', '1986-01-05', 'olivia.thomas@example.com', '1234567899', 11, 'Gynecology', 'https://example.com/photos/olivia_thomas.jpg');
+
+INSERT INTO doctors (first_name, last_name, gender, birthdate, email, phone_number, experience_years, specialization, photo_url)
+VALUES
+('William', 'Evans', 'M', '1982-04-12', 'william.evans@example.com', '1234567810', 12, 'Cardiology', 'https://example.com/photos/william_evans.jpg'),
+('Mia', 'Taylor', 'F', '1991-07-23', 'mia.taylor@example.com', '1234567811', 9, 'Neurology', 'https://example.com/photos/mia_taylor.jpg'),
+('Ethan', 'Harris', 'M', '1983-09-17', 'ethan.harris@example.com', '1234567812', 15, 'Pediatrics', 'https://example.com/photos/ethan_harris.jpg'),
+('Charlotte', 'Clark', 'F', '1990-11-05', 'charlotte.clark@example.com', '1234567813', 7, 'Dermatology', 'https://example.com/photos/charlotte_clark.jpg'),
+('Liam', 'Martinez', 'M', '1976-08-20', 'liam.martinez@example.com', '1234567814', 22, 'Orthopedics', 'https://example.com/photos/liam_martinez.jpg'),
+('Isabella', 'Lopez', 'F', '1989-05-30', 'isabella.lopez@example.com', '1234567815', 10, 'Ophthalmology', 'https://example.com/photos/isabella_lopez.jpg'),
+('Benjamin', 'Lee', 'M', '1987-03-12', 'benjamin.lee@example.com', '1234567816', 13, 'Anesthesiology', 'https://example.com/photos/benjamin_lee.jpg'),
+('Ava', 'Walker', 'F', '1984-06-25', 'ava.walker@example.com', '1234567817', 16, 'Radiology', 'https://example.com/photos/ava_walker.jpg'),
+('Lucas', 'Hall', 'M', '1979-10-09', 'lucas.hall@example.com', '1234567818', 19, 'Surgery', 'https://example.com/photos/lucas_hall.jpg'),
+('Harper', 'Allen', 'F', '1985-01-15', 'harper.allen@example.com', '1234567819', 12, 'Gynecology', 'https://example.com/photos/harper_allen.jpg'),
+('Mason', 'Young', 'M', '1981-12-04', 'mason.young@example.com', '1234567820', 14, 'Cardiology', 'https://example.com/photos/mason_young.jpg'),
+('Ella', 'King', 'F', '1993-02-28', 'ella.king@example.com', '1234567821', 5, 'Neurology', 'https://example.com/photos/ella_king.jpg'),
+('Alexander', 'Wright', 'M', '1988-09-15', 'alexander.wright@example.com', '1234567822', 9, 'Pediatrics', 'https://example.com/photos/alexander_wright.jpg'),
+('Amelia', 'Scott', 'F', '1986-03-19', 'amelia.scott@example.com', '1234567823', 11, 'Dermatology', 'https://example.com/photos/amelia_scott.jpg'),
+('Michael', 'Green', 'M', '1977-07-07', 'michael.green@example.com', '1234567824', 23, 'Orthopedics', 'https://example.com/photos/michael_green.jpg'),
+('Emily', 'Adams', 'F', '1992-11-22', 'emily.adams@example.com', '1234567825', 6, 'Ophthalmology', 'https://example.com/photos/emily_adams.jpg'),
+('James', 'Nelson', 'M', '1980-04-04', 'james.nelson@example.com', '1234567826', 17, 'Anesthesiology', 'https://example.com/photos/james_nelson.jpg'),
+('Sofia', 'Baker', 'F', '1989-01-14', 'sofia.baker@example.com', '1234567827', 10, 'Radiology', 'https://example.com/photos/sofia_baker.jpg'),
+('Henry', 'Mitchell', 'M', '1984-05-20', 'henry.mitchell@example.com', '1234567828', 16, 'Surgery', 'https://example.com/photos/henry_mitchell.jpg'),
+('Abigail', 'Perez', 'F', '1991-12-18', 'abigail.perez@example.com', '1234567829', 8, 'Gynecology', 'https://example.com/photos/abigail_perez.jpg');

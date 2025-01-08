@@ -322,6 +322,20 @@
 
             <div class="specialists text-center">
                 <h3>Our Specialists</h3>
+                <div class="filters">
+                    <label for="filter">Filter By:</label>
+                    <select id="filter">
+                        <option value="specialization">Specialization</option>
+                        <option value="experience_years">Experience Years</option>
+                        <option value="gender">Gender</option>
+                        <option value="birthdate">Birthdate</option>
+                    </select>
+                
+                    <label for="filter_value">Filter Value:</label>
+                    <input type="text" id="filter_value" placeholder="Enter filter value">
+                
+                    <button onclick="applyFilters()">Apply Filters</button>
+                </div>
                 
                 <div>
                     <label for="sorting" >Sort By:</label>
@@ -364,46 +378,56 @@
 
 <script>
 let currentPage =1;
-let totalPages = 4;
+let totalPages = 10;
 let doctorsPerPage = 3;
 let sortField = "first_name"; 
 let sortOrder = "asc"; 
+let filterField = ""; 
+let filterValue = ""; 
+document.querySelector("button").addEventListener("click", applyFilters);
 
-function loadDoctors() {
-    const sortingSelect = document.getElementById("sorting");
-    const sortValue = sortingSelect.value;
-    
-    const sortMapping = {
-        "name-asc": { field: "first_name", order: "asc" },
-        "name-desc": { field: "first_name", order: "desc" },
-        "surname-asc": { field: "last_name", order: "asc" },
-        "surname-desc": { field: "last_name", order: "desc" },
-        "experience-asc": { field: "experience_years", order: "asc" },
-        "experience-desc": { field: "experience_years", order: "desc" },
-    };
-    
-    const { field, order } = sortMapping[sortValue] || { field: "first_name", order: "asc" };
-    
-    const url = new URL("http://localhost:8080/doctors");
-    const params = {
-        sort: field,
-        order: order,
-        limit: doctorsPerPage,
-        offset: (currentPage - 1) * doctorsPerPage,
-        page: currentPage
-    };
-    
-    Object.keys(params).forEach(key => url.searchParams.append(key, params[key]));
-    
-    fetch(url)
-        .then(response => response.json())
-        .then(data => {
+    function loadDoctors() {
+        const sortingSelect = document.getElementById("sorting");
+        const sortValue = sortingSelect.value;
+        
+        const sortMapping = {
+            "name-asc": { field: "first_name", order: "asc" },
+            "name-desc": { field: "first_name", order: "desc" },
+            "surname-asc": { field: "last_name", order: "asc" },
+            "surname-desc": { field: "last_name", order: "desc" },
+            "experience-asc": { field: "experience_years", order: "asc" },
+            "experience-desc": { field: "experience_years", order: "desc" },
+        };
+        
+        const { field, order } = sortMapping[sortValue] || { field: "first_name", order: "asc" };
+        
+        const url = new URL("http://localhost:8080/doctors");
+        const params = {
+            sort: field,
+            order: order,
+            limit: doctorsPerPage,
+            offset: (currentPage - 1) * doctorsPerPage,
+            page: currentPage
+        };
+        if (filterField && filterValue) {
+        params.filter = filterField;
+        params.filter_value = filterValue;
+    }
+        
+        Object.keys(params).forEach(key => url.searchParams.append(key, params[key]));
+        
+        fetch(url)
+            .then(response => response.json())
+            .then(data => {
             const doctors = data.content;
+    
+             // Set total pages from the response
             renderDoctors(doctors);
-            updatePagination(data.totalPages || 1);
-        })
-        .catch(error => console.error("Error loading doctors:", error));
-}
+            updatePagination(); // Update pagination based on the new totalPages value
+        
+            })
+            .catch(error => console.error("Error loading doctors:", error));
+    }
 
 
 function renderDoctors(doctors) {
@@ -413,7 +437,7 @@ function renderDoctors(doctors) {
     doctors.forEach(doctor => {
         const doctorCard = `
             <div class="doctor-card">
-                <img src="${doctor.image || 'default.jpg'}" alt="Doctor Image">
+                <img src="${  doctor.image }" alt="Doctor Image">
                 <div class="name">${doctor.first_name} ${doctor.last_name}</div>
                 <div class="experience">${doctor.experience_years} years</div>
                 <div class="specialization">${doctor.specialization}</div>
@@ -449,6 +473,21 @@ function sortDoctors() {
     currentPage = 1; // reset to first page when sorting changes
     loadDoctors();
 }
+function applyFilters() {
+    const filterSelect = document.getElementById('filter');
+    filterField = filterSelect.value;
+    filterValue = document.getElementById('filter_value').value;
+    currentPage = 1; // Reset to the first page when filters are applied
+    loadDoctors();
+}
+
+// Initialize the page
+document.addEventListener("DOMContentLoaded", () => {
+    loadDoctors(); // Load the doctors on page load
+
+    // Add event listener to the apply filters button
+    document.querySelector("button").addEventListener("click", applyFilters);
+});
 
 
 

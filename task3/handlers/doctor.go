@@ -69,6 +69,9 @@ func GetDoctorsList(w http.ResponseWriter, r *http.Request) {
 	filterValue := query.Get("filter_value")
 	filterFrom := query.Get("filter_from")
 	filterTo := query.Get("filter_to")
+
+	db := tools.DB // Use local db variable to avoid overwriting global DB
+
 	if filter != "" {
 		allowedFilters := map[string]bool{
 			"specialization":   true,
@@ -84,17 +87,17 @@ func GetDoctorsList(w http.ResponseWriter, r *http.Request) {
 
 		if filterValue != "" {
 			log.Printf("Filtering by field: %s with value: %s", filter, filterValue)
-			tools.DB = tools.DB.Where(fmt.Sprintf("%s = ?", filter), filterValue)
+			db = db.Where(fmt.Sprintf("%s = ?", filter), filterValue)
 		} else if filterFrom != "" || filterTo != "" {
 			if filterFrom != "" && filterTo != "" {
 				log.Printf("Filtering by field: %s with range: %s to %s", filter, filterFrom, filterTo)
-				tools.DB = tools.DB.Where(fmt.Sprintf("%s BETWEEN ? AND ?", filter), filterFrom, filterTo)
+				db = db.Where(fmt.Sprintf("%s BETWEEN ? AND ?", filter), filterFrom, filterTo)
 			} else if filterFrom != "" {
 				log.Printf("Filtering by field: %s with minimum value: %s", filter, filterFrom)
-				tools.DB = tools.DB.Where(fmt.Sprintf("%s >= ?", filter), filterFrom)
+				db = db.Where(fmt.Sprintf("%s >= ?", filter), filterFrom)
 			} else if filterTo != "" {
 				log.Printf("Filtering by field: %s with maximum value: %s", filter, filterTo)
-				tools.DB = tools.DB.Where(fmt.Sprintf("%s <= ?", filter), filterTo)
+				db = db.Where(fmt.Sprintf("%s <= ?", filter), filterTo)
 			}
 		}
 	}
@@ -103,7 +106,11 @@ func GetDoctorsList(w http.ResponseWriter, r *http.Request) {
 	log.Printf("GetDoctorsList called with parameters: sort=%s, order=%s, limit=%d, offset=%d, page=%d", sortField, sortOrder, limit, offset, page)
 
 	// Query the database
-	result := tools.DB.Order(fmt.Sprintf("%s %s", sortField, sortOrder)).Offset(offset).Limit(limit).Find(&doctors)
+	result := db.Order(fmt.Sprintf("%s %s", sortField, sortOrder)).
+		Offset(offset).
+		Limit(limit).
+		Find(&doctors)
+
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			tools.OperateUnsuccessfulResponse(w, "No doctors found", http.StatusNotFound)

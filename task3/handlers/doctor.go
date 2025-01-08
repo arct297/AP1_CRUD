@@ -2,15 +2,15 @@ package handlers
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
-	"log"
 	"net/http"
 	"strconv"
 
 	_ "github.com/lib/pq"
-	"gorm.io/gorm"
 
+	"github.com/sirupsen/logrus"
+
+	"task3/logger"
 	"task3/models"
 	"task3/tools"
 )
@@ -19,6 +19,12 @@ func GetDoctorsList(w http.ResponseWriter, r *http.Request) {
 	var doctors []models.Doctor
 
 	query := r.URL.Query()
+
+	logger.Log.WithFields(logrus.Fields{
+		"action": "get_doctors_list",
+		"method": r.Method,
+		"query":  query.Encode(),
+	}).Info("Received request")
 
 	// Sorting parameters
 	sortField := query.Get("sort")
@@ -46,22 +52,36 @@ func GetDoctorsList(w http.ResponseWriter, r *http.Request) {
 
 	// Limit parameter
 	limitStr := query.Get("limit")
-	limit, limitErr := strconv.Atoi(limitStr)
-	if limitErr != nil || limit <= 0 {
+	limit, err := strconv.Atoi(limitStr)
+	if err != nil || limit <= 0 {
+		logger.Log.WithFields(logrus.Fields{
+			"action": "get_doctors_list",
+			"error":  "Invalid limit parameter",
+		}).Warn("Using default limit")
 		limit = 10
 	}
 
 	// Offset and Page parameter
 	offsetStr := query.Get("offset")
-	offset, offsetErr := strconv.Atoi(offsetStr)
-	if offsetErr != nil || offset < 0 {
+	offset, err := strconv.Atoi(offsetStr)
+	if err != nil || offset < 0 {
+		logger.Log.WithFields(logrus.Fields{
+			"action": "get_doctors_list",
+			"error":  "Invalid offset parameter",
+		}).Warn("Using default offset")
 		offset = 0
 	}
 
 	pageStr := query.Get("page")
-	page, pageErr := strconv.Atoi(pageStr)
-	if pageErr == nil && page > 1 {
+	page, err := strconv.Atoi(pageStr)
+	if err == nil && page > 1 {
 		offset = (page - 1) * limit
+	} else if err != nil {
+		logger.Log.WithFields(logrus.Fields{
+			"action": "get_doctors_list",
+			"error":  "Invalid page parameter",
+		}).Warn("Defaulting to page 1")
+		page = 1
 	}
 
 	// Filter parameter
@@ -81,29 +101,26 @@ func GetDoctorsList(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if !allowedFilters[filter] {
+			logger.Log.WithFields(logrus.Fields{
+				"action": "get_doctors_list",
+				"filter": filter,
+			}).Error("Invalid filter field")
 			tools.OperateUnsuccessfulResponse(w, "Invalid filter field", http.StatusBadRequest)
 			return
 		}
 
 		if filterValue != "" {
-			log.Printf("Filtering by field: %s with value: %s", filter, filterValue)
 			db = db.Where(fmt.Sprintf("%s = ?", filter), filterValue)
 		} else if filterFrom != "" || filterTo != "" {
 			if filterFrom != "" && filterTo != "" {
-				log.Printf("Filtering by field: %s with range: %s to %s", filter, filterFrom, filterTo)
 				db = db.Where(fmt.Sprintf("%s BETWEEN ? AND ?", filter), filterFrom, filterTo)
 			} else if filterFrom != "" {
-				log.Printf("Filtering by field: %s with minimum value: %s", filter, filterFrom)
 				db = db.Where(fmt.Sprintf("%s >= ?", filter), filterFrom)
 			} else if filterTo != "" {
-				log.Printf("Filtering by field: %s with maximum value: %s", filter, filterTo)
 				db = db.Where(fmt.Sprintf("%s <= ?", filter), filterTo)
 			}
 		}
 	}
-
-	// Log request parameters
-	log.Printf("GetDoctorsList called with parameters: sort=%s, order=%s, limit=%d, offset=%d, page=%d", sortField, sortOrder, limit, offset, page)
 
 	// Query the database
 	result := db.Order(fmt.Sprintf("%s %s", sortField, sortOrder)).
@@ -112,13 +129,27 @@ func GetDoctorsList(w http.ResponseWriter, r *http.Request) {
 		Find(&doctors)
 
 	if result.Error != nil {
-		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-			tools.OperateUnsuccessfulResponse(w, "No doctors found", http.StatusNotFound)
-		} else {
-			tools.OperateUnsuccessfulResponse(w, "Internal server error", http.StatusInternalServerError)
-		}
+		logger.Log.WithFields(logrus.Fields{
+			"action": "get_doctors_list",
+			"error":  result.Error.Error(),
+		}).Error("Failed to fetch doctors")
+		tools.OperateUnsuccessfulResponse(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
+
+	if len(doctors) == 0 {
+		logger.Log.WithFields(logrus.Fields{
+			"action": "get_doctors_list",
+			"filter": filter,
+		}).Warn("No doctors match the criteria")
+		tools.OperateUnsuccessfulResponse(w, "No doctors match the filter", http.StatusNotFound)
+		return
+	}
+
+	logger.Log.WithFields(logrus.Fields{
+		"action": "get_doctors_list",
+		"count":  len(doctors),
+	}).Info("Fetched doctors successfully")
 
 	// Respond with the list of doctors
 	w.Header().Set("Content-Type", "application/json")
@@ -131,7 +162,7 @@ func GetDoctorsList(w http.ResponseWriter, r *http.Request) {
 		Total:  len(doctors),
 	}
 
-	err := json.NewEncoder(w).Encode(models.ListResponse[[]models.Doctor]{
+	err = json.NewEncoder(w).Encode(models.ListResponse[[]models.Doctor]{
 		Code:    http.StatusOK,
 		Status:  "success",
 		Message: "Doctors list",
@@ -139,8 +170,18 @@ func GetDoctorsList(w http.ResponseWriter, r *http.Request) {
 		Meta:    meta,
 	})
 	if err != nil {
-		log.Printf("Failed to encode response: %v", err)
+		logger.Log.WithFields(logrus.Fields{
+			"action": "get_doctors_list",
+			"error":  err.Error(),
+			"status": http.StatusInternalServerError,
+		}).Error("Failed to encode response to JSON")
 		tools.OperateUnsuccessfulResponse(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
+
+	logger.Log.WithFields(logrus.Fields{
+		"action": "get_doctors_list",
+		"status": http.StatusOK,
+		"count":  len(doctors),
+	}).Info("Response sent successfully")
 }

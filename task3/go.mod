@@ -9,7 +9,11 @@ require (
 	gorm.io/gorm v1.25.12
 )
 
-require gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
+require (
+	github.com/sirupsen/logrus v1.9.3 // indirect
+	golang.org/x/sys v0.29.0 // indirect
+	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
+)
 
 require (
 	github.com/jackc/pgpassfile v1.0.0 // indirect

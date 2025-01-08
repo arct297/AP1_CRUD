@@ -9,11 +9,16 @@ import (
 	_ "github.com/lib/pq"
 
 	"task3/handlers"
+	"task3/logger"
 	"task3/tools"
 )
 
 func main() {
 	tools.InitDatabaseClient()
+
+	if err := logger.InitLogger(); err != nil {
+		log.Fatalf("Logger initialization failed: %v", err)
+	}
 
 	sqlDB, err := tools.DB.DB()
 	if err != nil {

@@ -98,7 +98,7 @@
 
     <script>
         function goback(){
-            window.location.href = "/patients";
+            window.location.href = "/";
         }
         document.getElementById("mailingForm").addEventListener("submit", function(event) {
             event.preventDefault();  
@@ -113,7 +113,7 @@
                 receiving_group: receivingGroup
             };
 
-            fetch("/make-mailing", {
+            fetch("/mailing", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"

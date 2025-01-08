@@ -7,12 +7,8 @@ import (
 	"strconv"
 
 	_ "github.com/lib/pq"
-<<<<<<< HEAD
 
 	"github.com/sirupsen/logrus"
-=======
-	"gorm.io/gorm"
->>>>>>> 37d16bdc2759e7cf5f6f06b0c06433312db102ad
 
 	"task3/logger"
 	"task3/models"
@@ -105,19 +101,15 @@ func GetDoctorsList(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if !allowedFilters[filter] {
-<<<<<<< HEAD
 			logger.Log.WithFields(logrus.Fields{
 				"action": "get_doctors_list",
 				"filter": filter,
 			}).Error("Invalid filter field")
-=======
->>>>>>> 37d16bdc2759e7cf5f6f06b0c06433312db102ad
 			tools.OperateUnsuccessfulResponse(w, "Invalid filter field", http.StatusBadRequest)
 			return
 		}
 
 		if filterValue != "" {
-<<<<<<< HEAD
 			db = db.Where(fmt.Sprintf("%s = ?", filter), filterValue)
 		} else if filterFrom != "" || filterTo != "" {
 			if filterFrom != "" && filterTo != "" {
@@ -125,29 +117,10 @@ func GetDoctorsList(w http.ResponseWriter, r *http.Request) {
 			} else if filterFrom != "" {
 				db = db.Where(fmt.Sprintf("%s >= ?", filter), filterFrom)
 			} else if filterTo != "" {
-=======
-			log.Printf("Filtering by field: %s with value: %s", filter, filterValue)
-			db = db.Where(fmt.Sprintf("%s = ?", filter), filterValue)
-		} else if filterFrom != "" || filterTo != "" {
-			if filterFrom != "" && filterTo != "" {
-				log.Printf("Filtering by field: %s with range: %s to %s", filter, filterFrom, filterTo)
-				db = db.Where(fmt.Sprintf("%s BETWEEN ? AND ?", filter), filterFrom, filterTo)
-			} else if filterFrom != "" {
-				log.Printf("Filtering by field: %s with minimum value: %s", filter, filterFrom)
-				db = db.Where(fmt.Sprintf("%s >= ?", filter), filterFrom)
-			} else if filterTo != "" {
-				log.Printf("Filtering by field: %s with maximum value: %s", filter, filterTo)
->>>>>>> 37d16bdc2759e7cf5f6f06b0c06433312db102ad
 				db = db.Where(fmt.Sprintf("%s <= ?", filter), filterTo)
 			}
 		}
 	}
-<<<<<<< HEAD
-=======
-
-	// Log request parameters
-	log.Printf("GetDoctorsList called with parameters: sort=%s, order=%s, limit=%d, offset=%d, page=%d", sortField, sortOrder, limit, offset, page)
->>>>>>> 37d16bdc2759e7cf5f6f06b0c06433312db102ad
 
 	// Query the database
 	result := db.Order(fmt.Sprintf("%s %s", sortField, sortOrder)).

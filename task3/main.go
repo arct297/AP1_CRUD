@@ -1,9 +1,13 @@
 package main
 
 import (
+	"context"
 	"log"
 	"net/http"
+	"os"
+	"os/signal"
 	"path/filepath"
+	"syscall"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -55,7 +59,6 @@ func main() {
 	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("./static"))))
 
 	// Return index.html on root path
-
 	r.HandleFunc("/admin", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, filepath.Join("static", "admin.html"))
 	}).Methods("GET")
@@ -85,8 +88,35 @@ func main() {
 	// Apply rate-limiting middleware
 	rateLimitedRouter := rateLimiterMiddleware(r)
 
-	// Start the HTTP server
-	http.Handle("/", rateLimitedRouter)
-	log.Println("Server is running on port 8080...")
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	// Create HTTP server
+	srv := &http.Server{
+		Addr:    ":8080",
+		Handler: rateLimitedRouter,
+	}
+
+	// Channel to listen for OS signals
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
+
+	// Start server in a goroutine
+	go func() {
+		log.Println("Server is running on port 8080...")
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("ListenAndServe(): %v", err)
+		}
+	}()
+
+	// Wait for termination signal
+	<-quit
+	log.Println("Server is shutting down...")
+
+	// Graceful shutdown with a timeout of 30 seconds
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	if err := srv.Shutdown(ctx); err != nil {
+		log.Fatalf("Server forced to shutdown: %v", err)
+	}
+
+	log.Println("Server exiting")
 }

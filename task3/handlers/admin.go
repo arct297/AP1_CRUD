@@ -130,7 +130,7 @@ func sendEmailWithAttachment(topic, text, receiver, attachmentPath string) error
 
 func ensureTempDirectoryExists(tempDir string) error {
 	if _, err := os.Stat(tempDir); os.IsNotExist(err) {
-		return os.Mkdir(tempDir, 0755) // Create directory with write permissions
+		return os.Mkdir(tempDir, 0755)
 	}
 	return nil
 }

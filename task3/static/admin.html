@@ -1,0 +1,144 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Mailing System</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            width: 60%;
+            margin: 40px auto;
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            font-weight: bold;
+            display: block;
+            margin-bottom: 8px;
+        }
+        .form-group input, .form-group textarea, .form-group select {
+            width: 100%;
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+        .form-group textarea {
+            resize: vertical;
+        }
+        .btn {
+            display: inline-block;
+            padding: 12px 20px;
+            background-color: #000000;
+            color: white;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-align: center;
+        }
+        .btn:hover {
+            background-color: #561400;
+        }
+        .error-message {
+            color: red;
+            font-size: 14px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Admin Panel - Send Mailing</h1>
+
+        <form id="mailingForm">
+            <div class="form-group">
+                <label for="topic">Email Topic</label>
+                <input type="text" id="topic" name="topic" required>
+            </div>
+
+            <div class="form-group">
+                <label for="message">Email Message</label>
+                <textarea id="message" name="message" rows="6" required></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="receivingGroup">Receiving Group</label>
+                <select id="receivingGroup" name="receivingGroup" required>
+                    <option value="">Select Group</option>
+                    <option value="doctors">Doctors</option>
+                    <!-- Additional groups can be added here -->
+                </select>
+            </div>
+
+            <button type="submit" class="btn">Send Email</button>
+            <button class="btn" onclick="goback()">Go Back</button>
+        </form>
+
+        <div id="responseMessage" class="error-message"></div>
+    </div>
+
+    <script>
+        function goback(){
+            window.location.href = "/patients";
+        }
+        document.getElementById("mailingForm").addEventListener("submit", function(event) {
+            event.preventDefault();  
+
+            const topic = document.getElementById("topic").value;
+            const message = document.getElementById("message").value;
+            const receivingGroup = document.getElementById("receivingGroup").value;
+
+            const requestData = {
+                topic: topic,
+                message: message,
+                receiving_group: receivingGroup
+            };
+
+            fetch("/make-mailing", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(requestData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                
+                if (data.success) {
+                    
+                } else {
+                    showError(data.message || "An error occurred while sending the email.");
+                }
+            });
+            document.getElementById("mailingForm").reset();
+            alert("Email sent successfully!");
+        });
+
+        function showError(message) {
+            const responseMessage = document.getElementById("responseMessage");
+            responseMessage.textContent = message;
+            responseMessage.style.display = "block";
+        }
+    </script>
+
+</body>
+</html>

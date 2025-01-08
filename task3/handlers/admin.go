@@ -17,36 +17,41 @@ import (
 func MakeMailing(w http.ResponseWriter, r *http.Request) {
 	var mailingData models.MailingRequest
 	if err := json.NewDecoder(r.Body).Decode(&mailingData); err != nil {
-		tools.OperateUnsuccessfulResponse(w, "Bad request: Invalid JSON received", http.StatusBadRequest)
-		return
-	}
-
+        w.Header().Set("Content-Type", "application/json")
+        w.WriteHeader(http.StatusBadRequest)
+        json.NewEncoder(w).Encode(map[string]string{"message": "Bad request: Invalid JSON received"})
+        return
+    } 
 	if mailingData.ReceivingGroup == "doctors" {
-		var doctors []models.Doctor
+        var doctors []models.Doctor
 
-		result := tools.DB.Find(&doctors)
-		if result.Error != nil {
-			if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-				tools.OperateUnsuccessfulResponse(w, "No doctors found", http.StatusNotFound)
-			} else {
-				tools.OperateUnsuccessfulResponse(w, "Internal server error", http.StatusInternalServerError)
-			}
-			return
-		}
+        result := tools.DB.Find(&doctors)
+        if result.Error != nil {
+            w.Header().Set("Content-Type", "application/json")
+            if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+                w.WriteHeader(http.StatusNotFound)
+                json.NewEncoder(w).Encode(map[string]string{"message": "No doctors found"})
+            } else {
+                w.WriteHeader(http.StatusInternalServerError)
+                json.NewEncoder(w).Encode(map[string]string{"message": "Internal server error"})
+            }
+            return
+        }
 
-		// Commented to avoid random emails to generated doctors
-		// for _, doctor := range doctors {
-		// 	sendEmail(mailingData.Topic, mailingData.Message, doctor.Email)
-		// }
+        // Send email (just for testing, sending to one email)
+        sendEmail(mailingData.Topic, mailingData.Message, "debarbiest@gmail.com")
 
-		sendEmail(mailingData.Topic, mailingData.Message, "siniov.arseniy@gmail.com")
-
-	} else {
-		tools.OperateUnsuccessfulResponse(w, "Bad request: Unsupported receiving group", http.StatusBadRequest)
-		return
-	}
-
+        w.Header().Set("Content-Type", "application/json")
+        w.WriteHeader(http.StatusOK)
+        json.NewEncoder(w).Encode(map[string]string{"success": "true", "message": "Email sent successfully!"})
+    } else {
+        w.Header().Set("Content-Type", "application/json")
+        w.WriteHeader(http.StatusBadRequest)
+        json.NewEncoder(w).Encode(map[string]string{"message": "Bad request: Unsupported receiving group"})
+    }
 }
+
+	
 
 func sendEmail(topic string, text string, receiver string) {
 	smtpHost := "smtp.gmail.com"

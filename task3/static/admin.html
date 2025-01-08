@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -69,7 +68,7 @@
     <div class="container">
         <h1>Admin Panel - Send Mailing</h1>
 
-        <form id="mailingForm">
+        <form id="mailingForm" enctype="multipart/form-data">
             <div class="form-group">
                 <label for="topic">Email Topic</label>
                 <input type="text" id="topic" name="topic" required>
@@ -85,52 +84,51 @@
                 <select id="receivingGroup" name="receivingGroup" required>
                     <option value="">Select Group</option>
                     <option value="doctors">Doctors</option>
-                    <!-- Additional groups can be added here -->
                 </select>
             </div>
 
+            <div class="form-group">
+                <label for="attachment">Attach File</label>
+                <input type="file" id="attachment" name="attachment" accept=".pdf,.doc,.docx,.jpg,.png">
+            </div>
+
             <button type="submit" class="btn">Send Email</button>
-            <button class="btn" onclick="goback()">Go Back</button>
+            <button class="btn" type="button" onclick="goback()">Go Back</button>
         </form>
 
         <div id="responseMessage" class="error-message"></div>
     </div>
 
     <script>
-        function goback(){
+        function goback() {
             window.location.href = "/";
         }
+
         document.getElementById("mailingForm").addEventListener("submit", function(event) {
-            event.preventDefault();  
+            event.preventDefault();
 
-            const topic = document.getElementById("topic").value;
-            const message = document.getElementById("message").value;
-            const receivingGroup = document.getElementById("receivingGroup").value;
-
-            const requestData = {
-                topic: topic,
-                message: message,
-                receiving_group: receivingGroup
-            };
+            const form = document.getElementById("mailingForm");
+            const formData = new FormData(form); // Create a FormData object to handle multipart data
 
             fetch("/mailing", {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify(requestData)
+                body: formData, // Send the FormData object directly
             })
-            .then(response => response.json())
-            .then(data => {
-                
-                if (data.success) {
-                    
-                } else {
-                    showError(data.message || "An error occurred while sending the email.");
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(data => {
+                        showError(data.message || "An error occurred while sending the email.");
+                    });
                 }
+                return response.json().then(data => {
+                    alert("Email sent successfully!");
+                    form.reset(); // Reset the form, including the file input
+                });
+            })
+            .catch(error => {
+                showError("Failed to send the email. Please try again.");
+                console.error("Error:", error);
             });
-            document.getElementById("mailingForm").reset();
-            alert("Email sent successfully!");
         });
 
         function showError(message) {

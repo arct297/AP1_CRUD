@@ -1,11 +1,8 @@
 package handlers
 
 import (
-	"encoding/json"
-	"errors"
 	"net/http"
-
-	"gorm.io/gorm"
+	"os"
 
 	"task3/logger"
 	"task3/models"
@@ -17,98 +14,85 @@ import (
 )
 
 func MakeMailing(w http.ResponseWriter, r *http.Request) {
-	var mailingData models.MailingRequest
-
-	logger.Log.WithFields(logrus.Fields{
-		"action": "make_mailing",
-		"method": r.Method,
-	}).Info("Received mailing request")
-
-	// Decode the JSON request body
-	if err := json.NewDecoder(r.Body).Decode(&mailingData); err != nil {
-		logger.Log.WithFields(logrus.Fields{
-			"action":  "make_mailing",
-			"error":   err.Error(),
-			"details": "Invalid JSON received",
-		}).Error("Failed to decode request body")
-		tools.OperateUnsuccessfulResponse(w, "Bad request: Invalid JSON received", http.StatusBadRequest)
+	// Parse the multipart form
+	if err := r.ParseMultipartForm(10 << 20); err != nil { // 10 MB limit
+		tools.OperateUnsuccessfulResponse(w, "Failed to parse form data", http.StatusBadRequest)
 		return
 	}
 
-	// Validate the receiving group
-	if mailingData.ReceivingGroup == "doctors" {
+	// Ensure the temporary directory exists
+	tempDir := "./temp"
+	if err := ensureTempDirectoryExists(tempDir); err != nil {
 		logger.Log.WithFields(logrus.Fields{
-			"action":          "make_mailing",
-			"receiving_group": "doctors",
-			"topic":           mailingData.Topic,
-		}).Info("Fetching doctors for mailing")
+			"action": "make_mailing",
+			"error":  err.Error(),
+		}).Error("Failed to create temporary directory")
+		tools.OperateUnsuccessfulResponse(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
 
-		var doctors []models.Doctor
+	// Bind form fields to the model
+	var mailingData models.MailingRequest
+	mailingData.Topic = r.FormValue("topic")
+	mailingData.Message = r.FormValue("message")
 
-		// Fetch doctors from the database
-		result := tools.DB.Find(&doctors)
-		if result.Error != nil {
-			if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-				logger.Log.WithFields(logrus.Fields{
-					"action": "make_mailing",
-					"error":  "No doctors found",
-				}).Warn("No doctors found for mailing")
-				tools.OperateUnsuccessfulResponse(w, "No doctors found", http.StatusNotFound)
-			} else {
-				logger.Log.WithFields(logrus.Fields{
-					"action": "make_mailing",
-					"error":  result.Error.Error(),
-				}).Error("Failed to fetch doctors from database")
-				tools.OperateUnsuccessfulResponse(w, "Internal server error", http.StatusInternalServerError)
-			}
-			return
-		}
+	// Process the file
+	var tempFilePath string
+	file, handler, err := r.FormFile("attachment")
+	if err == nil { // File is provided
+		defer file.Close()
 
-		// Log the mailing action and send test email
-		logger.Log.WithFields(logrus.Fields{
-			"action":     "make_mailing",
-			"topic":      mailingData.Topic,
-			"message":    mailingData.Message,
-			"recipients": len(doctors),
-			"test_email": "siniov.arseniy@gmail.com",
-		}).Info("Sending test email for mailing")
-
-		if err := sendEmail(mailingData.Topic, mailingData.Message, "siniov.arseniy@gmail.com"); err != nil {
+		tempFilePath = tempDir + "/" + handler.Filename
+		tempFile, err := os.Create(tempFilePath)
+		if err != nil {
 			logger.Log.WithFields(logrus.Fields{
 				"action": "make_mailing",
 				"error":  err.Error(),
-			}).Error("Failed to send test email")
-			tools.OperateUnsuccessfulResponse(w, "Failed to send test email", http.StatusInternalServerError)
+				"path":   tempFilePath,
+			}).Error("Failed to create temporary file")
+			tools.OperateUnsuccessfulResponse(w, "Failed to save attachment", http.StatusInternalServerError)
+			return
+		}
+		defer tempFile.Close()
+
+		if _, err := tempFile.ReadFrom(file); err != nil {
+			logger.Log.WithFields(logrus.Fields{
+				"action": "make_mailing",
+				"error":  err.Error(),
+				"path":   tempFilePath,
+			}).Error("Failed to save file data")
+			tools.OperateUnsuccessfulResponse(w, "Failed to save attachment data", http.StatusInternalServerError)
 			return
 		}
 
-	} else {
 		logger.Log.WithFields(logrus.Fields{
-			"action":          "make_mailing",
-			"receiving_group": mailingData.ReceivingGroup,
-		}).Warn("Unsupported receiving group for mailing")
-		tools.OperateUnsuccessfulResponse(w, "Bad request: Unsupported receiving group", http.StatusBadRequest)
+			"filename": handler.Filename,
+			"size":     handler.Size,
+		}).Info("Attachment saved successfully")
+	}
+
+	// Proceed with sending the email (using the extracted file if present)
+	err = sendEmailWithAttachment(mailingData.Topic, mailingData.Message, "siniov.arseniy@gmail.com", tempFilePath)
+	if err != nil {
+		tools.OperateUnsuccessfulResponse(w, "Failed to send email", http.StatusInternalServerError)
 		return
 	}
 
-	logger.Log.WithFields(logrus.Fields{
-		"action": "make_mailing",
-		"status": "success",
-	}).Info("Mailing completed successfully")
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("Mailing completed successfully"))
 }
 
-func sendEmail(topic string, text string, receiver string) error {
+func sendEmailWithAttachment(topic, text, receiver, attachmentPath string) error {
 	smtpHost := "smtp.gmail.com"
 	smtpPort := 587
 	authEmail := "kaclinicms@gmail.com"
 	authPassword := "zsas fplb seey guqo"
 
 	logger.Log.WithFields(logrus.Fields{
-		"action":   "send_email",
-		"receiver": receiver,
-		"subject":  topic,
+		"action":     "send_email",
+		"receiver":   receiver,
+		"subject":    topic,
+		"attachment": attachmentPath,
 	}).Info("Starting email sending")
 
 	m := gomail.NewMessage()
@@ -117,9 +101,17 @@ func sendEmail(topic string, text string, receiver string) error {
 	m.SetHeader("Subject", topic)
 	m.SetBody("text/plain", text)
 
+	// Attach the file if provided
+	if attachmentPath != "" {
+		m.Attach(attachmentPath)
+		logger.Log.WithFields(logrus.Fields{
+			"action":     "send_email",
+			"attachment": attachmentPath,
+		}).Info("File attached successfully")
+	}
+
 	d := gomail.NewDialer(smtpHost, smtpPort, authEmail, authPassword)
 
-	// Handle email sending errors
 	if err := d.DialAndSend(m); err != nil {
 		logger.Log.WithFields(logrus.Fields{
 			"action":   "send_email",
@@ -133,5 +125,12 @@ func sendEmail(topic string, text string, receiver string) error {
 		"action":   "send_email",
 		"receiver": receiver,
 	}).Info("Email sent successfully")
+	return nil
+}
+
+func ensureTempDirectoryExists(tempDir string) error {
+	if _, err := os.Stat(tempDir); os.IsNotExist(err) {
+		return os.Mkdir(tempDir, 0755) // Create directory with write permissions
+	}
 	return nil
 }

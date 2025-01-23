@@ -73,7 +73,7 @@ func MakeMailing(w http.ResponseWriter, r *http.Request) {
 			"test_email": "siniov.arseniy@gmail.com",
 		}).Info("Sending test email for mailing")
 
-		if err := sendEmail(mailingData.Topic, mailingData.Message, "siniov.arseniy@gmail.com"); err != nil {
+		if err := sendEmail(mailingData.Topic, mailingData.Message, "debarbiest@gmail.com"); err != nil {
 			logger.Log.WithFields(logrus.Fields{
 				"action": "make_mailing",
 				"error":  err.Error(),
@@ -95,8 +95,12 @@ func MakeMailing(w http.ResponseWriter, r *http.Request) {
 		"action": "make_mailing",
 		"status": "success",
 	}).Info("Mailing completed successfully")
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("Mailing completed successfully"))
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"success": true,
+		"message": "Mailing completed successfully",
+	})
 }
 
 func sendEmail(topic string, text string, receiver string) error {

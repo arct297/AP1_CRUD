@@ -88,6 +88,11 @@
                     <!-- Additional groups can be added here -->
                 </select>
             </div>
+            <div class="form-group">
+                <label for="attachment">Attachment</label>
+                <input type="file" id="attachment" name="attachment">
+            </div>
+            
 
             <button type="submit" class="btn">Send Email</button>
             <button class="btn" onclick="goback()">Go Back</button>
@@ -101,43 +106,43 @@
             window.location.href = "/";
         }
         document.getElementById("mailingForm").addEventListener("submit", function(event) {
-            event.preventDefault();  
+    event.preventDefault();
 
-            const topic = document.getElementById("topic").value;
-            const message = document.getElementById("message").value;
-            const receivingGroup = document.getElementById("receivingGroup").value;
+    const formData = new FormData();
+    formData.append("topic", document.getElementById("topic").value);
+    formData.append("message", document.getElementById("message").value);
+    formData.append("receiving_group", document.getElementById("receivingGroup").value);
 
-            const requestData = {
-                topic: topic,
-                message: message,
-                receiving_group: receivingGroup
-            };
+    const attachment = document.getElementById("attachment").files[0];
+    if (attachment) {
+        formData.append("attachment", attachment);
+    }
 
-            fetch("/mailing", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify(requestData)
-            })
-            .then(response => response.json())
-            .then(data => {
-                
-                if (data.success) {
-                    
-                } else {
-                    showError(data.message || "An error occurred while sending the email.");
-                }
-            });
-            document.getElementById("mailingForm").reset();
+    fetch("/mailing", {
+        method: "POST",
+        body: formData,  // No need to set headers, FormData does that automatically
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
             alert("Email sent successfully!");
-        });
+        } else {
+            showError(data.message || "An error occurred while sending the email.");
+        }
+    })
+    .catch(error => {
+        console.error("Error:", error);
+        showError("An error occurred while sending the email.");
+    });
+});
+
 
         function showError(message) {
             const responseMessage = document.getElementById("responseMessage");
             responseMessage.textContent = message;
             responseMessage.style.display = "block";
         }
+       
     </script>
 
 </body>

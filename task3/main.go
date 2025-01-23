@@ -68,6 +68,9 @@ func main() {
 	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, filepath.Join("static", "index.html"))
 	}).Methods("GET")
+	r.HandleFunc("/signup", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, filepath.Join("static", "signup.html"))
+	}).Methods("GET")
 	r.HandleFunc("/patients", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, filepath.Join("static", "patients.html"))
 	}).Methods("GET")

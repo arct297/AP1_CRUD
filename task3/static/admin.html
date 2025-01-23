@@ -86,6 +86,11 @@
                     <option value="doctors">Doctors</option>
                 </select>
             </div>
+            <div class="form-group">
+                <label for="attachment">Attachment</label>
+                <input type="file" id="attachment" name="attachment">
+            </div>
+            
 
             <div class="form-group">
                 <label for="attachment">Attach File</label>
@@ -105,37 +110,43 @@
         }
 
         document.getElementById("mailingForm").addEventListener("submit", function(event) {
-            event.preventDefault();
+    event.preventDefault();
 
-            const form = document.getElementById("mailingForm");
-            const formData = new FormData(form); // Create a FormData object to handle multipart data
+    const formData = new FormData();
+    formData.append("topic", document.getElementById("topic").value);
+    formData.append("message", document.getElementById("message").value);
+    formData.append("receiving_group", document.getElementById("receivingGroup").value);
 
-            fetch("/mailing", {
-                method: "POST",
-                body: formData, // Send the FormData object directly
-            })
-            .then(response => {
-                if (!response.ok) {
-                    return response.json().then(data => {
-                        showError(data.message || "An error occurred while sending the email.");
-                    });
-                }
-                return response.json().then(data => {
-                    alert("Email sent successfully!");
-                    form.reset(); // Reset the form, including the file input
-                });
-            })
-            .catch(error => {
-                showError("Failed to send the email. Please try again.");
-                console.error("Error:", error);
-            });
-        });
+    const attachment = document.getElementById("attachment").files[0];
+    if (attachment) {
+        formData.append("attachment", attachment);
+    }
+
+    fetch("/mailing", {
+        method: "POST",
+        body: formData,  // No need to set headers, FormData does that automatically
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert("Email sent successfully!");
+        } else {
+            showError(data.message || "An error occurred while sending the email.");
+        }
+    })
+    .catch(error => {
+        console.error("Error:", error);
+        showError("An error occurred while sending the email.");
+    });
+});
+
 
         function showError(message) {
             const responseMessage = document.getElementById("responseMessage");
             responseMessage.textContent = message;
             responseMessage.style.display = "block";
         }
+       
     </script>
 
 </body>

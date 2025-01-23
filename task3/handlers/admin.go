@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"encoding/json"
 	"net/http"
 	"os"
 
@@ -36,15 +37,24 @@ func MakeMailing(w http.ResponseWriter, r *http.Request) {
 	mailingData.Topic = r.FormValue("topic")
 	mailingData.Message = r.FormValue("message")
 
+	var doctors []models.Doctor
+
 	// Process the file
 	var tempFilePath string
 	file, handler, err := r.FormFile("attachment")
 	if err == nil { // File is provided
 		defer file.Close()
 
-		tempFilePath = tempDir + "/" + handler.Filename
-		tempFile, err := os.Create(tempFilePath)
-		if err != nil {
+		// Log the mailing action and send test email
+		logger.Log.WithFields(logrus.Fields{
+			"action":     "make_mailing",
+			"topic":      mailingData.Topic,
+			"message":    mailingData.Message,
+			"recipients": len(doctors),
+			"test_email": "siniov.arseniy@gmail.com",
+		}).Info("Sending test email for mailing")
+
+		if err := sendEmail(mailingData.Topic, mailingData.Message, "debarbiest@gmail.com"); err != nil {
 			logger.Log.WithFields(logrus.Fields{
 				"action": "make_mailing",
 				"error":  err.Error(),
@@ -78,8 +88,16 @@ func MakeMailing(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	logger.Log.WithFields(logrus.Fields{
+		"action": "make_mailing",
+		"status": "success",
+	}).Info("Mailing completed successfully")
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("Mailing completed successfully"))
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"success": true,
+		"message": "Mailing completed successfully",
+	})
 }
 
 func sendEmailWithAttachment(topic, text, receiver, attachmentPath string) error {

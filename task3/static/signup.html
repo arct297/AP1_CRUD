@@ -1,9 +1,9 @@
-<!DOCTYPE html> 
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login Page</title>
+    <title>Sign Up Page</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -16,7 +16,7 @@
             height: 100vh;
         }
 
-        .login-container {
+        .signup-container {
             width: 100%;
             max-width: 400px;
             background: white;
@@ -25,7 +25,7 @@
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         }
 
-        .login-container h2 {
+        .signup-container h2 {
             margin-bottom: 20px;
             text-align: center;
             color: #333;
@@ -55,7 +55,7 @@
             border-color: #333;
         }
 
-        .login-button {
+        .signup-button {
             width: 100%;
             padding: 10px;
             background-color: #333;
@@ -66,18 +66,11 @@
             cursor: pointer;
         }
 
-        .login-button:hover {
+        .signup-button:hover {
             background-color: #555;
         }
 
-        .error-message {
-            color: red;
-            font-size: 14px;
-            margin-top: 10px;
-            text-align: center;
-        }
-
-        .google-login-button {
+        .google-signup-button {
             width: 100%;
             padding: 10px;
             background-color: #ffffff;
@@ -90,40 +83,47 @@
             cursor: pointer;
         }
 
-        .google-login-button:hover {
+        .google-signup-button:hover {
             background-color: #757f8e;
         }
 
-        .google-login-button img {
+        .google-signup-button img {
             width: 20px;
             height: 20px;
             margin-right: 10px;
         }
 
-        .signup-link {
+        .error-message {
+            color: red;
+            font-size: 14px;
+            margin-top: 10px;
+            text-align: center;
+        }
+
+        .already-have-account {
             text-align: center;
             margin-top: 15px;
         }
 
-        .signup-link a {
+        .already-have-account a {
             color: #333;
             text-decoration: none;
         }
 
-        .signup-link a:hover {
+        .already-have-account a:hover {
             text-decoration: underline;
         }
     </style>
 
-    <!-- Firebase SDKs -->
+    <!-- firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.17.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.2/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.2/firebase-analytics-compat.js"></script>
 </head>
 <body>
-    <div class="login-container">
-        <h2>Login</h2>
-        <form id="loginForm">
+    <div class="signup-container">
+        <h2>Sign Up</h2>
+        <form id="signupForm">
             <div class="form-group">
                 <label for="email">Email</label>
                 <input type="email" id="email" placeholder="Enter your email" required>
@@ -132,16 +132,16 @@
                 <label for="password">Password</label>
                 <input type="password" id="password" placeholder="Enter your password" required>
             </div>
-            <button type="submit" class="login-button">Login</button>
-            <button type="button" class="google-login-button" onclick="signInWithGoogle()">
+            <button type="submit" class="signup-button">Sign Up</button>
+            <button type="button" class="google-signup-button" onclick="signUpWithGoogle()">
                 <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_logo.svg/768px-Google_%22G%22_logo.svg.png" alt="Google Logo">
-                Sign in with Google
+                Sign up with Google
             </button>
             <p class="error-message" id="errorMessage"></p>
         </form>
-
-        <div class="signup-link">
-            <p>Don't have an account? <a href="/signup">Sign Up</a></p>
+        
+        <div class="already-have-account">
+            <p>Already have an account? <a href="/login">Log In</a></p>
         </div>
     </div>
 
@@ -158,31 +158,10 @@
 
         const app = firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
-
+        
         const provider = new firebase.auth.GoogleAuthProvider();
 
-        function signInWithGoogle() {
-    auth.signInWithPopup(provider)
-        .then((result) => {
-            const user = result.user;
-            
-            const isGoogleSignIn = user.providerData.some(provider => provider.providerId === firebase.auth.GoogleAuthProvider.PROVIDER_ID);
-            
-            if (isGoogleSignIn) {
-                console.log('User signed up with Google:', user);
-                window.location.href = "/patients"; 
-            } else {
-                console.log('This account was not created using Google.');
-                document.getElementById("errorMessage").textContent = "You must sign up with Google to log in this way.";
-            }
-        })
-        .catch((error) => {
-            console.error("Error during Google sign-in:", error.message);
-            document.getElementById("errorMessage").textContent = error.message;
-        });
-}
-
-        document.getElementById("loginForm").addEventListener("submit", async (e) => {
+        document.getElementById("signupForm").addEventListener("submit", async (e) => {
             e.preventDefault();
 
             const email = document.getElementById("email").value.trim();
@@ -190,14 +169,27 @@
             const errorMessage = document.getElementById("errorMessage");
 
             try {
-                await auth.signInWithEmailAndPassword(email, password);
-                alert("Login successful!");
-                window.location.href = "/patients"; 
+                await auth.createUserWithEmailAndPassword(email, password);
+                alert("Sign Up successful!");
+                window.location.href = "/admin"; // Redirect to admin page
             } catch (error) {
-                console.error("Error Signing In:", error);
+                console.error("Error during Sign Up:", error);
                 errorMessage.textContent = error.message;
             }
         });
+
+        function signUpWithGoogle() {
+            auth.signInWithPopup(provider)
+                .then((result) => {
+                    const user = result.user;
+                    console.log("User signed up with Google:", user);
+                    window.location.href = "/admin"; // Redirect to admin page
+                })
+                .catch((error) => {
+                    console.error("Error during Google sign-up:", error.message);
+                    document.getElementById("errorMessage").textContent = error.message;
+                });
+        }
     </script>
 </body>
 </html>

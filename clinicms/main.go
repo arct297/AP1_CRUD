@@ -11,13 +11,14 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/joho/godotenv"
 	"golang.org/x/time/rate"
 
 	_ "github.com/lib/pq"
 
-	"task3/handlers"
-	"task3/logger"
-	"task3/tools"
+	"clinicms/handlers"
+	"clinicms/logger"
+	"clinicms/tools"
 )
 
 // Define a global rate limiter
@@ -37,7 +38,12 @@ func rateLimiterMiddleware(next http.Handler) http.Handler {
 }
 
 func main() {
-	// Initialize database client
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatalf("Error loading .env file: %v", err)
+	}
+
+	// Initialize the database
 	tools.InitDatabaseClient()
 
 	// Initialize logger
@@ -52,16 +58,13 @@ func main() {
 	}
 	defer sqlDB.Close()
 
-	// Initialize router
+	// Initialize the router
 	r := mux.NewRouter()
 
 	// Serve static files like HTML, CSS, JS
 	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("./static"))))
 
 	// Return index.html on root path
-	r.HandleFunc("/admin", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, filepath.Join("static", "admin.html"))
-	}).Methods("GET")
 	r.HandleFunc("/login", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, filepath.Join("static", "login.html"))
 	}).Methods("GET")
@@ -75,18 +78,45 @@ func main() {
 		http.ServeFile(w, r, filepath.Join("static", "patients.html"))
 	}).Methods("GET")
 
+	// Public routes (no authentication required)
+	publicRoutes := r.PathPrefix("/api").Subrouter()
+	publicRoutes.HandleFunc("/register", handlers.RegisterUser).Methods("POST")
+	publicRoutes.HandleFunc("/login", handlers.LoginUser).Methods("POST")
+	publicRoutes.HandleFunc("/logout", handlers.LogoutUser).Methods("GET")
+	publicRoutes.HandleFunc("/confirm", handlers.ConfirmEmail).Methods("GET")
+
+	// Protected routes (require authentication)
+	protectedRoutes := r.PathPrefix("/api").Subrouter()
+	protectedRoutes.Use(tools.JWTAuthMiddleware)
+	protectedRoutes.HandleFunc("/patients", handlers.GetPatientsList).Methods("GET")
+	protectedRoutes.HandleFunc("/patients/{id}", handlers.GetPatientByID).Methods("GET")
+	protectedRoutes.HandleFunc("/patients", handlers.CreatePatient).Methods("POST")
+	protectedRoutes.HandleFunc("/patients/{id}", handlers.UpdatePatient).Methods("PUT")
+	protectedRoutes.HandleFunc("/patients/{id}", handlers.DeletePatient).Methods("DELETE")
+
+	// Admin routes (require admin role)
+	adminRoutes := r.PathPrefix("/admin").Subrouter()
+	adminRoutes.Use(tools.JWTAuthMiddleware)
+	adminRoutes.Use(tools.RoleMiddleware("admin"))
+	adminRoutes.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, filepath.Join("static", "admin.html"))
+	}).Methods("GET")
+	adminRoutes.HandleFunc("/mailing", handlers.MakeMailing).Methods("POST")
+	adminRoutes.HandleFunc("/patients", handlers.GetPatientsList).Methods("GET")
+
+	// adminRoutes.HandleFunc("/users", handlers.GetUsersList).Methods("GET") // Example admin route
+
 	// Patient API routes
-	r.HandleFunc("/patients", handlers.CreatePatient).Methods("POST")        // Create patient
-	r.HandleFunc("/patients/{id}", handlers.GetPatientByID).Methods("GET")   // Get patient by ID
-	r.HandleFunc("/patients", handlers.GetPatientsList).Methods("GET")       // Get patients list
-	r.HandleFunc("/patients/{id}", handlers.UpdatePatient).Methods("PUT")    // Update patient by ID
-	r.HandleFunc("/patients/{id}", handlers.DeletePatient).Methods("DELETE") // Delete patient by ID
+	// r.HandleFunc("/patients", handlers.CreatePatient).Methods("POST")        // Create patient
+	// r.HandleFunc("/patients/{id}", handlers.GetPatientByID).Methods("GET")   // Get patient by ID
+	// r.HandleFunc("/patients", handlers.GetPatientsList).Methods("GET")       // Get patients list
+	// r.HandleFunc("/patients/{id}", handlers.UpdatePatient).Methods("PUT")    // Update patient by ID
+	// r.HandleFunc("/patients/{id}", handlers.DeletePatient).Methods("DELETE") // Delete patient by ID
 
 	// Doctor API route
 	r.HandleFunc("/doctors", handlers.GetDoctorsList).Methods("GET")
 
 	// Mailing API route
-	r.HandleFunc("/mailing", handlers.MakeMailing).Methods("POST")
 
 	// Apply rate-limiting middleware
 	rateLimitedRouter := rateLimiterMiddleware(r)

@@ -7,12 +7,11 @@ import (
 	"strconv"
 
 	_ "github.com/lib/pq"
-
 	"github.com/sirupsen/logrus"
 
-	"task3/logger"
-	"task3/models"
-	"task3/tools"
+	"clinicms/logger"
+	"clinicms/models"
+	"clinicms/tools"
 )
 
 func GetDoctorsList(w http.ResponseWriter, r *http.Request) {
@@ -123,7 +122,8 @@ func GetDoctorsList(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Query the database
-	result := db.Order(fmt.Sprintf("%s %s", sortField, sortOrder)).
+	result := db.Preload("User").
+		Order(fmt.Sprintf("%s %s", sortField, sortOrder)).
 		Offset(offset).
 		Limit(limit).
 		Find(&doctors)

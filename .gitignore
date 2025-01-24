@@ -1,2 +1,7 @@
 activity_logs.json
 *.zip
+
+temp/
+*.txt
+.env
+*.json

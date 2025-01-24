@@ -5,10 +5,10 @@ package models
 // )
 
 type Response struct {
-	Code    int      `json:"code"`
-	Status  string   `json:"status"`
-	Message string   `json:"message"`
-	Content *Patient `json:"content,omitempty"`
+	Code    int         `json:"code"`
+	Status  string      `json:"status"`
+	Message string      `json:"message"`
+	Content interface{} `json:"content,omitempty"`
 }
 
 type ListResponseMeta struct {

@@ -11,8 +11,8 @@ import (
 
 	"gorm.io/gorm"
 
-	"task3/models"
-	"task3/tools"
+	"clinicms/models"
+	"clinicms/tools"
 )
 
 func CreatePatient(w http.ResponseWriter, r *http.Request) {

@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"task3/models"
+	"clinicms/models"
 )
 
 func OperateUnsuccessfulResponse(w http.ResponseWriter, message string, statusCode int) {

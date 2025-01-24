@@ -5,13 +5,13 @@ import (
 	"net/http"
 	"os"
 
-	"task3/logger"
-	"task3/models"
-	"task3/tools"
-
 	"gopkg.in/gomail.v2"
 
 	"github.com/sirupsen/logrus"
+
+	"clinicms/logger"
+	"clinicms/models"
+	"clinicms/tools"
 )
 
 func MakeMailing(w http.ResponseWriter, r *http.Request) {
@@ -54,26 +54,26 @@ func MakeMailing(w http.ResponseWriter, r *http.Request) {
 			"test_email": "siniov.arseniy@gmail.com",
 		}).Info("Sending test email for mailing")
 
-		if err := sendEmail(mailingData.Topic, mailingData.Message, "debarbiest@gmail.com"); err != nil {
-			logger.Log.WithFields(logrus.Fields{
-				"action": "make_mailing",
-				"error":  err.Error(),
-				"path":   tempFilePath,
-			}).Error("Failed to create temporary file")
-			tools.OperateUnsuccessfulResponse(w, "Failed to save attachment", http.StatusInternalServerError)
-			return
-		}
-		defer tempFile.Close()
+		// if err := sendEmail(mailingData.Topic, mailingData.Message, "debarbiest@gmail.com"); err != nil {
+		// 	logger.Log.WithFields(logrus.Fields{
+		// 		"action": "make_mailing",
+		// 		"error":  err.Error(),
+		// 		"path":   tempFilePath,
+		// 	}).Error("Failed to create temporary file")
+		// 	tools.OperateUnsuccessfulResponse(w, "Failed to save attachment", http.StatusInternalServerError)
+		// 	return
+		// }
+		// defer tempFile.Close()
 
-		if _, err := tempFile.ReadFrom(file); err != nil {
-			logger.Log.WithFields(logrus.Fields{
-				"action": "make_mailing",
-				"error":  err.Error(),
-				"path":   tempFilePath,
-			}).Error("Failed to save file data")
-			tools.OperateUnsuccessfulResponse(w, "Failed to save attachment data", http.StatusInternalServerError)
-			return
-		}
+		// if _, err := tempFile.ReadFrom(file); err != nil {
+		// 	logger.Log.WithFields(logrus.Fields{
+		// 		"action": "make_mailing",
+		// 		"error":  err.Error(),
+		// 		"path":   tempFilePath,
+		// 	}).Error("Failed to save file data")
+		// 	tools.OperateUnsuccessfulResponse(w, "Failed to save attachment data", http.StatusInternalServerError)
+		// 	return
+		// }
 
 		logger.Log.WithFields(logrus.Fields{
 			"filename": handler.Filename,

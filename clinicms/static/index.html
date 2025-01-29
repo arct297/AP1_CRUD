@@ -280,8 +280,8 @@
             </div>
             <nav class="navigation">
                 <a href="#">Home</a>
-                <a href="http://localhost:8080/login" id="loginLink">Log In</a>
-                <a href="http://localhost:8080/api/logout" id="logoutLink">Log Out</a>
+                <a href="https://3ba3-5-34-127-237.ngrok-free.app/login" id="loginLink">Log In</a>
+                <a href="https://3ba3-5-34-127-237.ngrok-free.app/api/logout" id="logoutLink">Log Out</a>
             </nav>
         </header>
 
@@ -402,7 +402,7 @@ document.querySelector("button").addEventListener("click", applyFilters);
         
         const { field, order } = sortMapping[sortValue] || { field: "first_name", order: "asc" };
         
-        const url = new URL("http://localhost:8080/doctors");
+        const url = new URL("https://3ba3-5-34-127-237.ngrok-free.app/doctors");
         const params = {
             sort: field,
             order: order,

@@ -2,7 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
-	// "fmt"
+	"fmt"
 	"net/http"
 
 	"clinicms/models"
@@ -44,10 +44,10 @@ func RegisterUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Generate confirmation link
-	// confirmationLink := fmt.Sprintf("http://localhost:8080/api/confirm?email=%s", user.Login)
+	confirmationLink := fmt.Sprintf("https://3ba3-5-34-127-237.ngrok-free.app/api/confirm?email=%s", user.Login)
 
 	// Send confirmation email
-	// go tools.SendEmail("Confirm your registration", fmt.Sprintf("Click the link to confirm: %s", confirmationLink), user.Login)
+	go tools.SendEmail("Confirm your registration", fmt.Sprintf("Click the link to confirm: %s", confirmationLink), user.Login)
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)

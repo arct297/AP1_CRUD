@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Clinic Management System</title>
+
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -58,6 +59,11 @@
             width: calc(100% - 16px);
         }
     </style>
+    <script src="https://www.gstatic.com/firebasejs/9.17.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.2/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.2/firebase-analytics-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.2/firebase-firestore-compat.js"></script> 
+    
 </head>
 <body>
     <header>
@@ -74,6 +80,7 @@
             <button onclick="showForm('showPatientForm')">Show Patient</button>
             <button onclick="showAllPatients()">Show All Patients</button>
             <button onclick="sendMessageToPatients()">Send Message</button> 
+            <button onclick="showForm('manageRolesForm')">Manage Roles</button>
         </div>
         <script>
             function sendMessageToPatients() {
@@ -129,6 +136,19 @@
             <h3>All Patients</h3>
             <ul id="allPatientsList"></ul>
         </div>
+        <div id="manageRolesForm" class="form-container hidden">
+            <h3>Manage User Roles</h3>
+            <form id="roleManagementForm">
+                <input type="text" placeholder="User Email" id="userEmail" required>
+                <select id="newRole">
+                    <option value="user">User</option>
+                    <option value="admin">Admin</option>
+                </select>
+                <button type="submit">Update Role</button>
+            </form>
+            <p class="roleUpdateStatus"></p>
+        </div>
+
     </section>
 
     <footer>
@@ -144,6 +164,7 @@
             // Show the selected form
             document.getElementById(formId).classList.remove('hidden');
         }
+        
     </script>
 
 
@@ -151,6 +172,86 @@
     
 
 
+    const firebaseConfig = {
+        apiKey: "AIzaSyBnCkoejLpSZ9n2CAkeJXZBy6gsgtTcHL4",
+            authDomain: "clinicms-40dcc.firebaseapp.com",
+            projectId: "clinicms-40dcc",
+            storageBucket: "clinicms-40dcc.appspot.com",
+            messagingSenderId: "68685621662",
+            appId: "1:68685621662:web:e461f62b3e954a95558e8f",
+            measurementId: "G-2Y2VHQ4H6R"
+        };
+
+       
+ // Initialize Firebase
+     const app = firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+
+        document.getElementById('roleManagementForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  
+  const user = firebase.auth().currentUser;
+  if (!user) return showMessage("Not authenticated!", false);
+
+  const userEmail = document.getElementById('userEmail').value.trim();
+  const newRole = document.getElementById('newRole').value;
+
+  try {
+    const querySnapshot = await db.collection("users")
+      .where("email", "==", userEmail)
+      .get();
+
+    if (querySnapshot.empty) {
+      return showMessage("User not found", false);
+    }
+
+    const targetUser = querySnapshot.docs[0];
+    await targetUser.ref.update({ role: newRole });
+    
+    showMessage(`Role updated to ${newRole}`);
+  } catch (error) {
+    showMessage(`Error: ${error.message}`, false);
+  }
+});
+
+        // Show or hide the form
+        function showForm(formId) {
+            const form = document.getElementById(formId);
+            form.classList.toggle('hidden');
+        }
+
+        // Show message function (success or error)
+        function showMessage(message, success = true) {
+            const messageElement = document.createElement('div');
+            messageElement.textContent = message;
+            messageElement.style.padding = '10px';
+            messageElement.style.marginTop = '20px';
+            messageElement.style.backgroundColor = success ? '#4CAF50' : '#f44336';
+            messageElement.style.color = 'white';
+            document.body.appendChild(messageElement);
+        }
+
+        // Add authorization check example (adjust based on your auth system)
+        function checkAdminPrivileges() {
+            const currentUser = firebase.auth().currentUser;
+            if (currentUser) {
+                // Fetch user data from Firestore to check role
+                db.collection("users").doc(currentUser.uid).get().then((doc) => {
+                    if (doc.exists && doc.data().role !== "admin") {
+                        alert('You do not have admin privileges.');
+                        window.location.href = '/user'; // Redirect non-admin users
+                    }
+                }).catch((error) => {
+                    console.error("Error fetching user role:", error);
+                });
+            }
+        }
+
+        // Secure the button visibility (example)
+        window.onload = function() {
+            checkAdminPrivileges();
+        };
 
     document.addEventListener("DOMContentLoaded", function () {
     const baseUrl = "http://localhost:8080/patients";

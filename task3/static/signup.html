@@ -119,6 +119,8 @@
     <script src="https://www.gstatic.com/firebasejs/9.17.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.2/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.2/firebase-analytics-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.2/firebase-firestore-compat.js"></script> 
+    
 </head>
 <body>
     <div class="signup-container">
@@ -156,11 +158,23 @@
             measurementId: "G-2Y2VHQ4H6R"
         };
 
+        // Initialize Firebase
         const app = firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
-        
-        const provider = new firebase.auth.GoogleAuthProvider();
+        const firestore = firebase.firestore(); // Initialize Firestore
 
+        const provider = new firebase.auth.GoogleAuthProvider();
+        
+        // Function to save user role in Firestore
+        async function saveUserRole(uid, email, role = "user") {
+            await firestore.collection("users").doc(uid).set({
+                email: email, 
+                role: role
+        });
+}
+
+
+        // Email/Password Signup
         document.getElementById("signupForm").addEventListener("submit", async (e) => {
             e.preventDefault();
 
@@ -169,27 +183,41 @@
             const errorMessage = document.getElementById("errorMessage");
 
             try {
-                await auth.createUserWithEmailAndPassword(email, password);
+                const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+                const user = userCredential.user;
+
+                // Save user role in Firestore
+                await saveUserRole(user.uid, user.email);
+
+
                 alert("Sign Up successful!");
-                window.location.href = "/admin"; // Redirect to admin page
+                window.location.href = "/user"; // Redirect to user page
             } catch (error) {
                 console.error("Error during Sign Up:", error);
                 errorMessage.textContent = error.message;
             }
         });
 
-        function signUpWithGoogle() {
-            auth.signInWithPopup(provider)
-                .then((result) => {
-                    const user = result.user;
-                    console.log("User signed up with Google:", user);
-                    window.location.href = "/admin"; // Redirect to admin page
-                })
-                .catch((error) => {
-                    console.error("Error during Google sign-up:", error.message);
-                    document.getElementById("errorMessage").textContent = error.message;
-                });
+        // Google Signup
+        async function signUpWithGoogle() {
+            try {
+                const result = await auth.signInWithPopup(provider);
+                const user = result.user;
+
+                // Save user role in Firestore
+                await saveUserRole(user.uid);
+
+                alert("Sign Up with Google successful!");
+                window.location.href = "/user"; // Redirect to user page
+            } catch (error) {
+                console.error("Error during Google sign-up:", error.message);
+                document.getElementById("errorMessage").textContent = error.message;
+            }
         }
+
+       
+
+
     </script>
 </body>
 </html>

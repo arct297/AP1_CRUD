@@ -119,6 +119,8 @@
     <script src="https://www.gstatic.com/firebasejs/9.17.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.2/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.2/firebase-analytics-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.2/firebase-firestore-compat.js"></script> 
+    
 </head>
 <body>
     <div class="login-container">
@@ -161,27 +163,41 @@
 
         const provider = new firebase.auth.GoogleAuthProvider();
 
-        function signInWithGoogle() {
-    auth.signInWithPopup(provider)
-        .then((result) => {
-            const user = result.user;
-            
-            const isGoogleSignIn = user.providerData.some(provider => provider.providerId === firebase.auth.GoogleAuthProvider.PROVIDER_ID);
-            
-            if (isGoogleSignIn) {
-                console.log('User signed up with Google:', user);
-                window.location.href = "/patients"; 
-            } else {
-                console.log('This account was not created using Google.');
-                document.getElementById("errorMessage").textContent = "You must sign up with Google to log in this way.";
-            }
-        })
-        .catch((error) => {
-            console.error("Error during Google sign-in:", error.message);
-            document.getElementById("errorMessage").textContent = error.message;
-        });
+        // Function to fetch user role from Firebase or your backend
+        async function fetchUserRole(uid) {
+            // Replace this with your logic to fetch the user's role
+            // Example: Fetch from Firestore or your custom backend
+            const userDoc = await firebase.firestore().collection("users").doc(uid).get();
+            return userDoc.exists ? userDoc.data().role : "user"; // Default to "user"
+        }
+
+        // Google Sign-In
+        async function signInWithGoogle() {
+            try {
+                const result = await auth.signInWithPopup(provider);
+                const user = result.user;
+                const role = await fetchUserRole(user.uid);
+
+                // Redirect based on role
+                if (role === "user") {
+    console.log("Redirecting to user");
+    window.location.href = "/user";
+} else if(role === "admin") {
+    console.log("Redirecting to admin");
+    window.location.href = "/patients";
+} else {
+    console.log("No role found, redirecting to default user page");
+    window.location.href = "/user";
 }
 
+
+            } catch (error) {
+                console.error("Error during Google sign-in:", error.message);
+                document.getElementById("errorMessage").textContent = error.message;
+            }
+        }
+
+        // Email/Password Login
         document.getElementById("loginForm").addEventListener("submit", async (e) => {
             e.preventDefault();
 
@@ -190,9 +206,22 @@
             const errorMessage = document.getElementById("errorMessage");
 
             try {
-                await auth.signInWithEmailAndPassword(email, password);
-                alert("Login successful!");
-                window.location.href = "/patients"; 
+                const userCredential = await auth.signInWithEmailAndPassword(email, password);
+                const user = userCredential.user;
+                const role = await fetchUserRole(user.uid);
+
+                // Redirect based on role
+                if (role === "user") {
+    console.log("Redirecting to user");
+    window.location.href = "/user";
+} else if(role === "admin") {
+    console.log("Redirecting to admin");
+    window.location.href = "/patients";
+} else {
+    console.log("No role found, redirecting to default user page");
+    window.location.href = "/user";
+}
+
             } catch (error) {
                 console.error("Error Signing In:", error);
                 errorMessage.textContent = error.message;

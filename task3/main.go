@@ -37,6 +37,7 @@ func rateLimiterMiddleware(next http.Handler) http.Handler {
 }
 
 func main() {
+	
 	// Initialize database client
 	tools.InitDatabaseClient()
 
@@ -73,6 +74,9 @@ func main() {
 	}).Methods("GET")
 	r.HandleFunc("/patients", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, filepath.Join("static", "patients.html"))
+	}).Methods("GET")
+	r.HandleFunc("/user", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, filepath.Join("static", "user.html"))
 	}).Methods("GET")
 
 	// Patient API routes
